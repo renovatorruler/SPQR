@@ -1,5 +1,5 @@
 {
-  "name": "@spqr/bot",
+  "name": "@spqr/shared",
   "sources": [
     {
       "dir": "src",
@@ -12,6 +12,5 @@
       "in-source": true
     }
   ],
-  "suffix": ".res.mjs",
-  "dependencies": ["@spqr/shared"]
+  "suffix": ".res.mjs"
 }

@@ -1,0 +1,16 @@
+// Test stubs — living spec (Decision #10)
+
+// describe("BotError", () => {
+//   test.todo("toString formats ExchangeError ConnectionFailed with url and message")
+//   test.todo("toString formats ExchangeError AuthenticationFailed")
+//   test.todo("toString formats ExchangeError RateLimited with retry time")
+//   test.todo("toString formats ExchangeError InsufficientBalance with amounts")
+//   test.todo("toString formats ExchangeError OrderRejected with reason")
+//   test.todo("toString formats ConfigError FileNotFound with path")
+//   test.todo("toString formats ConfigError ParseFailed with message")
+//   test.todo("toString formats ConfigError MissingField with field name")
+//   test.todo("toString formats ConfigError InvalidValue with details")
+//   test.todo("toString formats StrategyError InsufficientData with counts")
+//   test.todo("toString formats StrategyError InvalidSignal with message")
+//   test.todo("all error variants are covered — no wildcards")
+// })

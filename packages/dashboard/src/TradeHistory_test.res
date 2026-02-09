@@ -1,0 +1,17 @@
+// Test stubs — living spec (Decision #10, #11)
+
+// describe("TradeHistory", () => {
+//   test.todo("renders 'No trades yet' when trades array is empty")
+//   test.todo("renders table with headers when trades exist")
+//   test.todo("renders correct symbol for each trade")
+//   test.todo("renders BUY/SELL for trade side")
+//   test.todo("renders Market/Limit for order type")
+//   test.todo("renders quantity for each trade")
+//   test.todo("renders Pending status correctly")
+//   test.todo("renders Filled status with fill price")
+//   test.todo("renders PartiallyFilled status with quantities")
+//   test.todo("renders Cancelled status with reason")
+//   test.todo("renders Rejected status with reason")
+//   test.todo("formats timestamp as ISO string")
+//   test.todo("uses trade ID as React key")
+// })

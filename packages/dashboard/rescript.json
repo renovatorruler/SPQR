@@ -13,11 +13,9 @@
     }
   ],
   "suffix": ".res.mjs",
+  "dependencies": ["@spqr/shared", "@rescript/react"],
   "jsx": {
     "version": 4,
     "mode": "automatic"
-  },
-  "dependencies": [
-    "@rescript/react"
-  ]
+  }
 }

@@ -1,13 +1,17 @@
+// Root application component
+
 @react.component
 let make = () => {
-  <div style={{maxWidth: "1200px", margin: "0 auto", padding: "24px"}}>
-    <h1 style={{fontSize: "24px", fontWeight: "bold", marginBottom: "24px"}}>
-      {React.string("SPQR Trading Dashboard")}
-    </h1>
-    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px"}}>
-      <PnLChart />
-      <PositionPanel />
-    </div>
-    <TradeList />
+  // Sample data for initial rendering
+  let sampleTrades: array<Trade.trade> = []
+
+  <div>
+    <header>
+      <h1>{React.string("SPQR Trading Bot")}</h1>
+    </header>
+    <main>
+      <Dashboard />
+      <TradeHistory trades=sampleTrades />
+    </main>
   </div>
 }
