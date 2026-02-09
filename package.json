@@ -1,36 +1,16 @@
 {
-  "name": "vite-react-rescript-starter",
-  "version": "1.0.0",
+  "name": "spqr-trading",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "vite build",
-    "clean": "rescript clean -with-deps",
-    "format": "rescript format -all",
-    "serve": "vite preview",
-    "start": "vite",
-    "test": "vitest",
-    "res:dev": "rescript build -w"
-  },
-  "dependencies": {
-    "@rescript/core": "^0.1.0",
-    "@rescript/react": "^0.11.0",
-    "gun": "^0.2020.1239",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "rescript-webapi": "^0.7.0"
-  },
-  "devDependencies": {
-    "@jihchi/vite-plugin-rescript": "^5.1.0",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@vitejs/plugin-react": "^3.0.1",
-    "autoprefixer": "^10.4.14",
-    "jsdom": "^21.1.0",
-    "postcss": "^8.4.21",
-    "rescript": "^10.1.2",
-    "rescript-vitest": "^1.1.0",
-    "tailwindcss": "^3.2.7",
-    "vite": "^4.0.4",
-    "vitest": "^0.28.3"
+    "bot:build": "npm run res:build -w @spqr/bot",
+    "bot:watch": "npm run res:watch -w @spqr/bot",
+    "bot:start": "npm run start -w @spqr/bot",
+    "dash:dev": "npm run dev -w @spqr/dashboard",
+    "dash:build": "npm run build -w @spqr/dashboard",
+    "build": "npm run res:build -w @spqr/bot && npm run build -w @spqr/dashboard",
+    "clean": "npm run res:clean -w @spqr/bot && npm run res:clean -w @spqr/dashboard"
   }
 }

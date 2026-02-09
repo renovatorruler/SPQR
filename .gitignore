@@ -1,11 +1,20 @@
-node_modules
-.DS_Store
-dist
-dist-ssr
-*.local
+node_modules/
 
-# ReScript
+# ReScript build artifacts
+lib/
 .bsb.lock
 .merlin
-/lib/
-*.bs.js
+
+# ReScript compiled output (in-source)
+*.res.mjs
+
+# Vite
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
