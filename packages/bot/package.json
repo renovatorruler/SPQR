@@ -1,0 +1,15 @@
+{
+  "name": "@spqr/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "res:build": "rescript build",
+    "res:watch": "rescript build -w",
+    "res:clean": "rescript clean",
+    "start": "node src/Main.res.mjs"
+  },
+  "devDependencies": {
+    "rescript": "12.1.0"
+  }
+}
