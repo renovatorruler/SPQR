@@ -1,0 +1,16 @@
+// Test stubs — living spec (Decision #10)
+
+// describe("Logger", () => {
+//   test.todo("levelToString maps Debug to 'DEBUG'")
+//   test.todo("levelToString maps Info to 'INFO'")
+//   test.todo("levelToString maps Trade to 'TRADE'")
+//   test.todo("levelToString maps Error to 'ERROR'")
+//   test.todo("log outputs valid JSON to stdout")
+//   test.todo("log includes timestamp, level, and message fields")
+//   test.todo("log includes data field when provided")
+//   test.todo("log omits data field when not provided")
+//   test.todo("debug convenience function uses Debug level")
+//   test.todo("info convenience function uses Info level")
+//   test.todo("trade convenience function uses Trade level")
+//   test.todo("error convenience function uses Error level")
+// })

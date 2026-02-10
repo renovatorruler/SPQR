@@ -1,0 +1,17 @@
+// Test stubs — living spec (Decision #10)
+// PaperExchange also serves as the test double (Decision #12)
+
+// describe("PaperExchange", () => {
+//   test.todo("make returns Ok with valid config")
+//   test.todo("initial balance is 10000")
+//   test.todo("getPrice returns a price for any symbol")
+//   test.todo("placeOrder Buy deducts from balance")
+//   test.todo("placeOrder Sell adds to balance")
+//   test.todo("placeOrder Buy with insufficient balance returns InsufficientBalance error")
+//   test.todo("placeOrder creates a trade with Filled status")
+//   test.todo("placeOrder Limit order uses the limit price for fill")
+//   test.todo("trade history is bounded to 1000 entries")
+//   test.todo("getBalance returns current balance after trades")
+//   test.todo("getOpenPositions returns empty array initially")
+//   test.todo("trade IDs are sequential: paper-1, paper-2, etc.")
+// })

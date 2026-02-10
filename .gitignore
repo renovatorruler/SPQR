@@ -11,6 +11,14 @@ lib/
 # Vite
 dist/
 
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Config (contains API keys)
+config.json
+
 # Environment
 .env
 .env.local

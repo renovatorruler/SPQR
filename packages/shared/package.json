@@ -1,5 +1,5 @@
 {
-  "name": "@spqr/bot",
+  "name": "@spqr/shared",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,11 +7,7 @@
     "res:build": "rescript build",
     "res:watch": "rescript build -w",
     "res:clean": "rescript clean",
-    "start": "node src/Main.res.mjs",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "@spqr/shared": "*"
   },
   "devDependencies": {
     "rescript": "^12.0.0-alpha.13",
