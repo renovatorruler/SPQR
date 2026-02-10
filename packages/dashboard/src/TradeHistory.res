@@ -49,41 +49,97 @@ let make = (~trades: array<Trade.trade>) => {
   | _ => HasTrades({trades: trades})
   }
 
-  <section>
-    <h2>{React.string("Trade History")}</h2>
+  <>
+    <LiftKit.Heading tag="h2" fontClass="title1-bold">
+      {React.string("Trade History")}
+    </LiftKit.Heading>
     {switch state {
     | NoTrades =>
-      <p>{React.string("No trades yet. The bot has not executed any trades.")}</p>
+      <LiftKit.Card variant="outline">
+        <LiftKit.Text fontClass="body" color="on-surface-variant">
+          {React.string("No trades yet. The bot has not executed any trades.")}
+        </LiftKit.Text>
+      </LiftKit.Card>
     | HasTrades({trades}) =>
-      <table>
-        <thead>
-          <tr>
-            <th>{React.string("Time")}</th>
-            <th>{React.string("Symbol")}</th>
-            <th>{React.string("Side")}</th>
-            <th>{React.string("Type")}</th>
-            <th>{React.string("Qty")}</th>
-            <th>{React.string("Status")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trades
-          ->Array.map(trade => {
-            let Trade.TradeId(id) = trade.id
-            let Trade.Symbol(sym) = trade.symbol
-            let Trade.Quantity(qty) = trade.requestedQty
-            <tr key=id>
-              <td>{React.string(trade.createdAt->formatTimestamp)}</td>
-              <td>{React.string(sym)}</td>
-              <td>{React.string(trade.side->sideToString)}</td>
-              <td>{React.string(trade.orderType->orderTypeToString)}</td>
-              <td>{React.string(qty->Float.toString)}</td>
-              <td>{React.string(trade.status->statusToString)}</td>
+      <LiftKit.Card>
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Time")}
+                </LiftKit.Text>
+              </th>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Symbol")}
+                </LiftKit.Text>
+              </th>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Side")}
+                </LiftKit.Text>
+              </th>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Type")}
+                </LiftKit.Text>
+              </th>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Qty")}
+                </LiftKit.Text>
+              </th>
+              <th className="text-left">
+                <LiftKit.Text tag="span" fontClass="label-bold" color="on-surface-variant">
+                  {React.string("Status")}
+                </LiftKit.Text>
+              </th>
             </tr>
-          })
-          ->React.array}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {trades
+            ->Array.map(trade => {
+              let Trade.TradeId(id) = trade.id
+              let Trade.Symbol(sym) = trade.symbol
+              let Trade.Quantity(qty) = trade.requestedQty
+              <tr key=id>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body">
+                    {React.string(trade.createdAt->formatTimestamp)}
+                  </LiftKit.Text>
+                </td>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body-bold">
+                    {React.string(sym)}
+                  </LiftKit.Text>
+                </td>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body">
+                    {React.string(trade.side->sideToString)}
+                  </LiftKit.Text>
+                </td>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body">
+                    {React.string(trade.orderType->orderTypeToString)}
+                  </LiftKit.Text>
+                </td>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body">
+                    {React.string(qty->Float.toString)}
+                  </LiftKit.Text>
+                </td>
+                <td>
+                  <LiftKit.Text tag="span" fontClass="body">
+                    {React.string(trade.status->statusToString)}
+                  </LiftKit.Text>
+                </td>
+              </tr>
+            })
+            ->React.array}
+          </tbody>
+        </table>
+      </LiftKit.Card>
     }}
-  </section>
+  </>
 }

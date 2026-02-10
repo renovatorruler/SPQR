@@ -75,11 +75,11 @@ type llmConfig = {
   evaluateSetups: bool,
 }
 
-// Market data source
+// Market data source — CCXT unified exchange library
+@unboxed type exchangeName = ExchangeName(string)
+
 type marketDataSource =
-  | BinancePublic
-  | BinanceUS
-  | CustomSource({baseUrl: baseUrl})
+  | Ccxt({exchangeId: exchangeName})
 
 type marketDataConfig = {
   source: marketDataSource,

@@ -1,5 +1,5 @@
 // Market data interface — abstracts candle/price data source
-// Implementations: BinanceMarketData (public API, no auth)
+// Implementations: CcxtMarketData (CCXT unified API, 100+ exchanges)
 
 module type S = {
   type t
@@ -10,7 +10,7 @@ module type S = {
     t,
     ~symbol: Trade.symbol,
     ~interval: Config.interval,
-    ~limit: int,
+    ~limit: Config.candleCount,
   ) => promise<result<array<Config.candlestick>, BotError.t>>
 
   let getCurrentPrice: (

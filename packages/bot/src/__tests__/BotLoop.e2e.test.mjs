@@ -5,8 +5,8 @@ import * as BotLoop from "../BotLoop.res.mjs";
 import * as PaperExchange from "../PaperExchange.res.mjs";
 import * as RiskManager from "../RiskManager.res.mjs";
 
-// Mock BinanceMarketData to avoid real network calls
-vi.mock("../BinanceMarketData.res.mjs", () => {
+// Mock CcxtMarketData to avoid real network calls
+vi.mock("../CcxtMarketData.res.mjs", () => {
   // W-pattern candles that create a base at ~100
   const defaultCandles = [
     { openTime: 1, open_: 110, high: 115, low: 105, close: 112, volume: 1000, closeTime: 2 },
@@ -34,7 +34,7 @@ vi.mock("../BinanceMarketData.res.mjs", () => {
 });
 
 // We need to dynamically import after mocking
-const BinanceMarketDataMock = await import("../BinanceMarketData.res.mjs");
+const CcxtMarketDataMock = await import("../CcxtMarketData.res.mjs");
 
 function makeConfig(overrides = {}) {
   return {
@@ -55,7 +55,7 @@ function makeConfig(overrides = {}) {
     },
     llm: undefined,
     marketData: {
-      source: "BinancePublic",
+      source: { exchangeId: "kraken" },
       defaultInterval: "1h",
     },
     engine: {
@@ -71,7 +71,7 @@ let exchange;
 let marketData;
 
 beforeEach(() => {
-  BinanceMarketDataMock.__resetMocks();
+  CcxtMarketDataMock.__resetMocks();
 
   const dbResult = Db.open_(":memory:");
   expect(dbResult.TAG).toBe("Ok");
@@ -81,8 +81,8 @@ beforeEach(() => {
   const exResult = PaperExchange.make({ exchangeId: "PaperExchange" });
   exchange = exResult._0;
 
-  const mdResult = BinanceMarketDataMock.make({
-    source: "BinancePublic",
+  const mdResult = CcxtMarketDataMock.make({
+    source: { exchangeId: "kraken" },
     defaultInterval: "1h",
   });
   marketData = mdResult._0;
@@ -144,7 +144,7 @@ describe("BotLoop E2E", () => {
   describe("processSymbol — crack detection and buy", () => {
     it("places buy order when crack detected", async () => {
       // Set price 5% below the base (~100) → should trigger crack
-      BinanceMarketDataMock.__setMockPrice(95.0);
+      CcxtMarketDataMock.__setMockPrice(95.0);
 
       const config = makeConfig();
       const state = BotState.make(db, config.riskLimits);
@@ -163,7 +163,7 @@ describe("BotLoop E2E", () => {
     });
 
     it("respects risk limits on buy", async () => {
-      BinanceMarketDataMock.__setMockPrice(95.0);
+      CcxtMarketDataMock.__setMockPrice(95.0);
 
       const config = makeConfig({
         riskLimits: {
@@ -189,7 +189,7 @@ describe("BotLoop E2E", () => {
   describe("processSymbol — no signal when price above bases", () => {
     it("does nothing when price is above all bases", async () => {
       // Price at 112 (above base at ~100) — no crack
-      BinanceMarketDataMock.__setMockPrice(112.0);
+      CcxtMarketDataMock.__setMockPrice(112.0);
 
       const config = makeConfig();
       const state = BotState.make(db, config.riskLimits);
@@ -227,7 +227,7 @@ describe("BotLoop E2E", () => {
       });
 
       // Price drops to 90 → 7.2% loss > 5% threshold
-      BinanceMarketDataMock.__setMockPrice(90.0);
+      CcxtMarketDataMock.__setMockPrice(90.0);
       PaperExchange.setCurrentPrice(exchange, "BTCUSDT", 90.0);
 
       const result = await BotLoop.processSymbol(engine, "BTCUSDT");
@@ -261,7 +261,7 @@ describe("BotLoop E2E", () => {
       });
 
       // Price bounces back to 102 → above base at 100
-      BinanceMarketDataMock.__setMockPrice(102.0);
+      CcxtMarketDataMock.__setMockPrice(102.0);
       PaperExchange.setCurrentPrice(exchange, "BTCUSDT", 102.0);
 
       const result = await BotLoop.processSymbol(engine, "BTCUSDT");
@@ -323,7 +323,7 @@ describe("BotLoop E2E", () => {
       const engine = BotLoop.make(exchange, marketData, state, config);
 
       // Set up crack detection scenario
-      BinanceMarketDataMock.__setMockPrice(95.0);
+      CcxtMarketDataMock.__setMockPrice(95.0);
       PaperExchange.setCurrentPrice(exchange, "BTCUSDT", 95.0);
 
       // Manually trigger a risk halt by exceeding position count

@@ -21,7 +21,7 @@ type engineState =
 
 type t = {
   exchange: PaperExchange.t,
-  marketData: BinanceMarketData.t,
+  marketData: CcxtMarketData.t,
   state: BotState.t,
   config: Config.botConfig,
   mutable engineState: engineState,
@@ -30,7 +30,7 @@ type t = {
 
 let make = (
   ~exchange: PaperExchange.t,
-  ~marketData: BinanceMarketData.t,
+  ~marketData: CcxtMarketData.t,
   ~state: BotState.t,
   ~config: Config.botConfig,
 ): t => {
@@ -52,7 +52,7 @@ let processSymbol = async (
   let Trade.Symbol(sym) = symbol
 
   // 1. Fetch candles
-  let candleResult = await BinanceMarketData.getCandles(
+  let candleResult = await CcxtMarketData.getCandles(
     engine.marketData,
     ~symbol,
     ~interval=engine.config.marketData.defaultInterval,
@@ -65,7 +65,7 @@ let processSymbol = async (
     Error(e)
   | Ok(candles) =>
     // 2. Get current price
-    let priceResult = await BinanceMarketData.getCurrentPrice(engine.marketData, symbol)
+    let priceResult = await CcxtMarketData.getCurrentPrice(engine.marketData, symbol)
 
     switch priceResult {
     | Error(e) =>

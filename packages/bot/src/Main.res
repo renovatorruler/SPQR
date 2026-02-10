@@ -75,10 +75,11 @@ let run = async () => {
     panic("Failed to initialize exchange")
   }
 
-  // 5. Initialize market data
-  let marketData = switch BinanceMarketData.make(config.marketData) {
+  // 5. Initialize market data (CCXT — supports 100+ exchanges)
+  let marketData = switch CcxtMarketData.make(config.marketData) {
   | Ok(md) =>
-    Logger.info("Market data source initialized (Binance public API)")
+    let Config.Ccxt({exchangeId: Config.ExchangeName(exName)}) = config.marketData.source
+    Logger.info(`Market data source initialized (CCXT: ${exName})`)
     md
   | Error(e) =>
     Logger.error(`Market data error: ${BotError.toString(e)}`)
@@ -106,7 +107,7 @@ let run = async () => {
     Db.close(db)
     panic("No symbols configured")
   }
-  let priceResult = await BinanceMarketData.getCurrentPrice(marketData, firstSymbol)
+  let priceResult = await CcxtMarketData.getCurrentPrice(marketData, firstSymbol)
   switch priceResult {
   | Ok(price) =>
     let Trade.Price(p) = price

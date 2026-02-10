@@ -165,12 +165,12 @@ describe("BotConfig", () => {
       expect(result._0._0.fieldName).toBe("marketData");
     });
 
-    it("rejects invalid marketData source", () => {
+    it("accepts any CCXT exchange name as source", () => {
       const cfg = validConfig();
       cfg.marketData = { source: "coinbase", defaultInterval: "1h" };
       const result = BotConfig.decode(cfg);
-      expect(result.TAG).toBe("Error");
-      expect(result._0._0.TAG).toBe("InvalidValue");
+      expect(result.TAG).toBe("Ok");
+      expect(result._0.marketData.source.exchangeId).toBe("coinbase");
     });
 
     it("rejects invalid LLM config (missing fields)", () => {

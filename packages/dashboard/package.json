@@ -4,24 +4,33 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
     "res:build": "rescript build",
     "res:watch": "rescript build -w",
     "res:clean": "rescript clean",
-    "test": "vitest run"
+    "add": "liftkit add"
   },
   "dependencies": {
+    "@csstools/normalize.css": "^12.1.1",
+    "@material/material-color-utilities": "^0.3.0",
     "@spqr/shared": "*",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "^0.511.0",
+    "next": "15.5.12",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@chainlift/liftkit": "0.2.0",
     "@rescript/react": "0.13.1",
-    "@vitejs/plugin-react": "4.7.0",
+    "@types/node": "20.17.50",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6",
     "rescript": "12.1.0",
-    "vite": "7.3.1",
-    "vitest": "3.2.4"
+    "shadcn": "2.7.0",
+    "typescript": "5.8.3"
   }
 }

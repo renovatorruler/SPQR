@@ -14,6 +14,14 @@ let botStatusToString = (status: botStatus): string => {
   }
 }
 
+let botStatusColor = (status: botStatus): string => {
+  switch status {
+  | Online => "primary"
+  | Offline => "on-surface-variant"
+  | BotError(_) => "error"
+  }
+}
+
 // No default values (Manifesto Principle 3)
 // Dashboard state is explicit about what data is available
 type dashboardData =
@@ -27,34 +35,56 @@ type dashboardData =
 
 @react.component
 let make = () => {
-  // Placeholder: hardcoded sample data
   let data = Loaded({
     totalPnl: Position.Pnl(0.0),
     activePositions: 0,
     botStatus: Offline,
   })
 
-  <section>
-    <h2>{React.string("Dashboard")}</h2>
+  <LiftKit.Section py="md">
+    <LiftKit.Heading tag="h2" fontClass="title1-bold">
+      {React.string("Dashboard")}
+    </LiftKit.Heading>
     {switch data {
-    | Loading => <p>{React.string("Loading dashboard...")}</p>
-    | FailedToLoad({reason}) => <p>{React.string(`Failed to load: ${reason}`)}</p>
+    | Loading =>
+      <LiftKit.Card>
+        <LiftKit.Text fontClass="body"> {React.string("Loading dashboard...")} </LiftKit.Text>
+      </LiftKit.Card>
+    | FailedToLoad({reason}) =>
+      <LiftKit.Card variant="outline">
+        <LiftKit.Text fontClass="body" color="error">
+          {React.string(`Failed to load: ${reason}`)}
+        </LiftKit.Text>
+      </LiftKit.Card>
     | Loaded({totalPnl, activePositions, botStatus}) =>
       let Position.Pnl(pnlValue) = totalPnl
-      <div>
-        <div>
-          <h3>{React.string("Total P&L")}</h3>
-          <p>{React.string(`$${pnlValue->Float.toString}`)}</p>
-        </div>
-        <div>
-          <h3>{React.string("Active Positions")}</h3>
-          <p>{React.string(activePositions->Int.toString)}</p>
-        </div>
-        <div>
-          <h3>{React.string("Bot Status")}</h3>
-          <p>{React.string(botStatus->botStatusToString)}</p>
-        </div>
-      </div>
+      let pnlColor = pnlValue >= 0.0 ? "primary" : "error"
+      <LiftKit.Grid columns=3 gap="md" autoResponsive=true>
+        <LiftKit.Card>
+          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
+            {React.string("Total P&L")}
+          </LiftKit.Text>
+          <LiftKit.Heading tag="h3" fontClass="display2-bold" fontColor=pnlColor>
+            {React.string(`$${pnlValue->Float.toString}`)}
+          </LiftKit.Heading>
+        </LiftKit.Card>
+        <LiftKit.Card>
+          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
+            {React.string("Active Positions")}
+          </LiftKit.Text>
+          <LiftKit.Heading tag="h3" fontClass="display2-bold">
+            {React.string(activePositions->Int.toString)}
+          </LiftKit.Heading>
+        </LiftKit.Card>
+        <LiftKit.Card>
+          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
+            {React.string("Bot Status")}
+          </LiftKit.Text>
+          <LiftKit.Heading tag="h3" fontClass="display2-bold" fontColor={botStatus->botStatusColor}>
+            {React.string(botStatus->botStatusToString)}
+          </LiftKit.Heading>
+        </LiftKit.Card>
+      </LiftKit.Grid>
     }}
-  </section>
+  </LiftKit.Section>
 }
