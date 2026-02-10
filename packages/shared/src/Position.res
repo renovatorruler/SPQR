@@ -42,3 +42,20 @@ let unrealizedPnl = (pos: position, currentPrice: Trade.price): pnl => {
   }
   Pnl(diff *. qty)
 }
+
+// Compute PnL from raw values — avoids constructing a full Position record
+let computePnl = (
+  ~side: positionSide,
+  ~entryPrice: Trade.price,
+  ~currentPrice: Trade.price,
+  ~qty: Trade.quantity,
+): pnl => {
+  let Trade.Price(entry) = entryPrice
+  let Trade.Price(current) = currentPrice
+  let Trade.Quantity(q) = qty
+  let diff = switch side {
+  | Long => current -. entry
+  | Short => entry -. current
+  }
+  Pnl(diff *. q)
+}

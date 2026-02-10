@@ -1,0 +1,27 @@
+{
+  "tradingMode": "paper",
+  "exchange": {
+    "exchangeId": "paper"
+  },
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "riskLimits": {
+    "maxPositionSize": 1000.0,
+    "maxOpenPositions": 5,
+    "maxDailyLoss": 500.0
+  },
+  "qfl": {
+    "crackThreshold": 3.0,
+    "stopLossThreshold": 5.0,
+    "takeProfitTarget": 0.0,
+    "minBouncesForBase": 3,
+    "lookbackCandles": 200
+  },
+  "marketData": {
+    "source": "binance",
+    "defaultInterval": "1h"
+  },
+  "engine": {
+    "pollIntervalMs": 30000,
+    "closeOnShutdown": false
+  }
+}

@@ -11,7 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@spqr/shared": "*"
+    "@spqr/shared": "*",
+    "better-sqlite3": "11.9.1"
   },
   "devDependencies": {
     "rescript": "12.1.0",
