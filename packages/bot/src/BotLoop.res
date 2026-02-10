@@ -75,6 +75,9 @@ let processSymbol = async (
       let Trade.Price(priceVal) = currentPrice
       Logger.debug(`${sym} price: ${priceVal->Float.toFixed(~digits=2)}`)
 
+      // Feed real price to paper exchange for realistic order fills
+      PaperExchange.setCurrentPrice(engine.exchange, symbol, currentPrice)
+
       // 3. Detect bases
       let baseResult = BaseDetector.detectBases(candles, ~minBounces=engine.config.qfl.minBouncesForBase)
       switch baseResult {

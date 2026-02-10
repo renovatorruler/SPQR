@@ -78,6 +78,7 @@ type llmConfig = {
 // Market data source
 type marketDataSource =
   | BinancePublic
+  | BinanceUS
   | CustomSource({baseUrl: baseUrl})
 
 type marketDataConfig = {

@@ -1,14 +1,21 @@
 // Binance public API market data — no authentication required
 // Fetches candles from /api/v3/klines and prices from /api/v3/ticker/price
 
-let baseUrl = "https://api.binance.com"
-
 type t = {
   config: Config.marketDataConfig,
+  baseUrl: string,
+}
+
+let resolveBaseUrl = (source: Config.marketDataSource): string => {
+  switch source {
+  | BinancePublic => "https://api.binance.com"
+  | BinanceUS => "https://api.binance.us"
+  | CustomSource({baseUrl: Config.BaseUrl(url)}) => url
+  }
 }
 
 let make = (config: Config.marketDataConfig): result<t, BotError.t> => {
-  Ok({config: config})
+  Ok({config, baseUrl: resolveBaseUrl(config.source)})
 }
 
 // Binance klines returns arrays: [openTime, open, high, low, close, volume, closeTime, ...]
@@ -54,7 +61,7 @@ let parseCandlestick = (json: JSON.t): option<Config.candlestick> => {
 @get external statusText: 'response => string = "statusText"
 
 let getCandles = async (
-  _t: t,
+  t: t,
   ~symbol: Trade.symbol,
   ~interval: Config.interval,
   ~limit: Config.candleCount,
@@ -62,7 +69,7 @@ let getCandles = async (
   let Trade.Symbol(sym) = symbol
   let Config.Interval(ivl) = interval
   let Config.CandleCount(lim) = limit
-  let url = `${baseUrl}/api/v3/klines?symbol=${sym}&interval=${ivl}&limit=${lim->Int.toString}`
+  let url = `${t.baseUrl}/api/v3/klines?symbol=${sym}&interval=${ivl}&limit=${lim->Int.toString}`
 
   try {
     let response = await fetch(url)
@@ -98,11 +105,11 @@ let getCandles = async (
 }
 
 let getCurrentPrice = async (
-  _t: t,
+  t: t,
   symbol: Trade.symbol,
 ): result<Trade.price, BotError.t> => {
   let Trade.Symbol(sym) = symbol
-  let url = `${baseUrl}/api/v3/ticker/price?symbol=${sym}`
+  let url = `${t.baseUrl}/api/v3/ticker/price?symbol=${sym}`
 
   try {
     let response = await fetch(url)

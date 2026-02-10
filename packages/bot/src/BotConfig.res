@@ -181,16 +181,22 @@ let decodeMarketDataConfig = (obj: Dict.t<JSON.t>): result<Config.marketDataConf
   | (Some(src), Some(ivl)) =>
     let marketDataSource = switch src {
     | "binance" => Ok(Config.BinancePublic)
+    | "binance_us" => Ok(Config.BinanceUS)
     | other =>
-      Error(
-        BotError.ConfigError(
-          InvalidValue({
-            fieldName: "marketData.source",
-            given: other,
-            expected: "binance",
-          }),
-        ),
-      )
+      // Check for custom URL
+      switch obj->Dict.get("baseUrl")->Option.flatMap(JSON.Decode.string) {
+      | Some(url) => Ok(Config.CustomSource({baseUrl: Config.BaseUrl(url)}))
+      | None =>
+        Error(
+          BotError.ConfigError(
+            InvalidValue({
+              fieldName: "marketData.source",
+              given: other,
+              expected: "binance | binance_us | custom (with baseUrl)",
+            }),
+          ),
+        )
+      }
     }
     marketDataSource->Result.map(s => {
       Config.source: s,
