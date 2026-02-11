@@ -141,8 +141,8 @@ describe("Db", () => {
   describe("saveBases / loadBases", () => {
     it("saves and loads bases for a symbol", () => {
       const bases = [
-        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
-        { priceLevel: 95.0, bounceCount: 2, firstSeen: 2000, lastBounce: 4000 },
+        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 100.0, maxLevel: 100.0 },
+        { priceLevel: 95.0, bounceCount: 2, firstSeen: 2000, lastBounce: 4000, minLevel: 95.0, maxLevel: 95.0 },
       ];
       const saveResult = Db.saveBases(db, "BTCUSDT", bases);
       expect(saveResult.TAG).toBe("Ok");
@@ -156,10 +156,10 @@ describe("Db", () => {
 
     it("replaces bases on re-save", () => {
       Db.saveBases(db, "BTCUSDT", [
-        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 100.0, maxLevel: 100.0 },
       ]);
       Db.saveBases(db, "BTCUSDT", [
-        { priceLevel: 200.0, bounceCount: 1, firstSeen: 3000, lastBounce: 6000 },
+        { priceLevel: 200.0, bounceCount: 1, firstSeen: 3000, lastBounce: 6000, minLevel: 200.0, maxLevel: 200.0 },
       ]);
 
       const loadResult = Db.loadBases(db, "BTCUSDT");

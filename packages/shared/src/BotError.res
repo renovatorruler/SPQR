@@ -31,7 +31,7 @@ type llmErrorKind =
 
 type riskErrorKind =
   | MaxDailyLossReached({currentLoss: float, limit: float})
-  | MaxOpenPositionsReached({current: int, limit: int})
+  | MaxOpenPositionsReached({current: Config.openPositionsCount, limit: Config.maxOpenPositions})
   | MaxPositionSizeExceeded({requested: float, limit: float})
 
 type engineErrorKind =
@@ -97,7 +97,11 @@ let toString = (error: t): string => {
     | MaxDailyLossReached({currentLoss, limit}) =>
       `Max daily loss reached: ${currentLoss->Float.toString} >= ${limit->Float.toString}`
     | MaxOpenPositionsReached({current, limit}) =>
-      `Max open positions reached: ${current->Int.toString} >= ${limit->Int.toString}`
+      {
+        let Config.OpenPositionsCount(currentCount) = current
+        let Config.MaxOpenPositions(limitCount) = limit
+        `Max open positions reached: ${currentCount->Int.toString} >= ${limitCount->Int.toString}`
+      }
     | MaxPositionSizeExceeded({requested, limit}) =>
       `Max position size exceeded: ${requested->Float.toString} > ${limit->Float.toString}`
     }

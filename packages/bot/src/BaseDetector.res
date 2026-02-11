@@ -7,6 +7,8 @@ type base = {
   bounceCount: Config.bounceCount,
   firstSeen: Trade.timestamp,
   lastBounce: Trade.timestamp,
+  minLevel: Trade.price,
+  maxLevel: Trade.price,
 }
 
 type baseDetectionResult =
@@ -44,11 +46,12 @@ let pricesNear = (a: Trade.price, b: Trade.price, ~tolerancePercent: float): boo
 // Two minimums within tolerancePercent of each other belong to the same base
 let clusterMinimums = (
   minimums: array<(Trade.price, Trade.timestamp)>,
-  ~tolerancePercent: float,
+  ~tolerancePercent: Config.tolerancePercent,
 ): array<base> => {
+  let Config.TolerancePercent(tolerance) = tolerancePercent
   minimums->Array.reduce([], (bases, (price, timestamp)) => {
     // Try to find an existing base near this price
-    let matchIndex = bases->Array.findIndex(b => pricesNear(b.priceLevel, price, ~tolerancePercent))
+    let matchIndex = bases->Array.findIndex(b => pricesNear(b.priceLevel, price, ~tolerancePercent=tolerance))
 
     switch matchIndex >= 0 {
     | true =>
@@ -62,11 +65,18 @@ let clusterMinimums = (
           let Config.BounceCount(count) = b.bounceCount
           let avgLevel = (existingLevel *. Float.fromInt(count) +. newLevel) /.
             Float.fromInt(count + 1)
+          let Trade.Price(currentMin) = b.minLevel
+          let Trade.Price(currentMax) = b.maxLevel
+          let Trade.Price(priceLevel) = price
+          let nextMin = if priceLevel < currentMin { priceLevel } else { currentMin }
+          let nextMax = if priceLevel > currentMax { priceLevel } else { currentMax }
           {
             priceLevel: Trade.Price(avgLevel),
             bounceCount: Config.BounceCount(count + 1),
             firstSeen: b.firstSeen,
             lastBounce: timestamp,
+            minLevel: Trade.Price(nextMin),
+            maxLevel: Trade.Price(nextMax),
           }
         | false => b
         }
@@ -78,17 +88,31 @@ let clusterMinimums = (
         bounceCount: Config.BounceCount(1),
         firstSeen: timestamp,
         lastBounce: timestamp,
+        minLevel: price,
+        maxLevel: price,
       }])
     }
   })
 }
 
+let driftPercent = (base: base): Config.driftPercent => {
+  let Trade.Price(minLevel) = base.minLevel
+  let Trade.Price(maxLevel) = base.maxLevel
+  let diff = if maxLevel > minLevel { maxLevel -. minLevel } else { minLevel -. maxLevel }
+  if maxLevel <= 0.0 {
+    Config.DriftPercent(0.0)
+  } else {
+    Config.DriftPercent((diff /. maxLevel) *. 100.0)
+  }
+}
+
 // Main base detection function
 let detectBases = (
   candles: array<Config.candlestick>,
-  ~minBounces: Config.bounceCount,
+  ~config: Config.baseFilterConfig,
 ): baseDetectionResult => {
-  let Config.BounceCount(minBounceCount) = minBounces
+  let Config.BounceCount(minBounceCount) = config.minBounces
+  let Config.DriftPercent(maxDrift) = config.maxBaseDrift
 
   if candles->Array.length < 3 {
     NoBases
@@ -108,8 +132,8 @@ let detectBases = (
     if minimums->Array.length == 0 {
       NoBases
     } else {
-      // Cluster minimums with 0.5% tolerance
-      let allBases = clusterMinimums(minimums, ~tolerancePercent=0.5)
+      // Cluster minimums using configured tolerance
+      let allBases = clusterMinimums(minimums, ~tolerancePercent=config.tolerance)
 
       // Filter to bases with enough bounces
       let confirmedBases =
@@ -118,11 +142,18 @@ let detectBases = (
           count >= minBounceCount
         })
 
-      switch confirmedBases->Array.length {
+      // Filter out bases that drifted too far
+      let stableBases =
+        confirmedBases->Array.filter(b => {
+          let Config.DriftPercent(drift) = driftPercent(b)
+          drift <= maxDrift
+        })
+
+      switch stableBases->Array.length {
       | 0 => NoBases
       | _ =>
         // Sort by bounce count descending (strongest bases first)
-        let sorted = confirmedBases->Array.toSorted((a, b) => {
+        let sorted = stableBases->Array.toSorted((a, b) => {
           let Config.BounceCount(aCount) = a.bounceCount
           let Config.BounceCount(bCount) = b.bounceCount
           Float.fromInt(bCount - aCount)

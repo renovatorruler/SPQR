@@ -6,10 +6,13 @@
 @unboxed type apiSecret = ApiSecret(string)
 @unboxed type baseUrl = BaseUrl(string)
 @unboxed type balance = Balance(float)
+@unboxed type maxOpenPositions = MaxOpenPositions(int)
+@unboxed type openPositionsCount = OpenPositionsCount(int)
 
 // Variants over strings (Manifesto Principle 2)
 type exchangeId =
   | Binance
+  | Kraken
   | Uniswap
   | Jupiter
   | PaperExchange
@@ -27,7 +30,7 @@ type exchangeConfig = {
 
 type riskLimits = {
   maxPositionSize: Trade.quantity,
-  maxOpenPositions: int,
+  maxOpenPositions: maxOpenPositions,
   maxDailyLoss: Position.pnl,
 }
 
@@ -40,6 +43,15 @@ type riskLimits = {
 @unboxed type bounceCount = BounceCount(int)
 @unboxed type candleCount = CandleCount(int)
 @unboxed type confidence = Confidence(float)
+@unboxed type tolerancePercent = TolerancePercent(float)
+@unboxed type driftPercent = DriftPercent(float)
+@unboxed type emaPeriod = EmaPeriod(int)
+@unboxed type emaSlopeLookback = EmaSlopeLookback(int)
+@unboxed type holdCandles = HoldCandles(int)
+@unboxed type cooldownCandles = CooldownCandles(int)
+@unboxed type weight = Weight(float)
+@unboxed type timeoutMs = TimeoutMs(int)
+@unboxed type minYesVotes = MinYesVotes(int)
 
 // Candle data for market analysis
 type candlestick = {
@@ -54,17 +66,75 @@ type candlestick = {
 
 // QFL strategy config
 
-type qflConfig = {
-  crackThreshold: crackPercent,
-  stopLossThreshold: stopLossPercent,
-  takeProfitTarget: takeProfitPercent,
-  minBouncesForBase: bounceCount,
-  lookbackCandles: candleCount,
+type regimeGateConfig = {
+  emaFast: emaPeriod,
+  emaSlow: emaPeriod,
+  emaSlopeLookback: emaSlopeLookback,
 }
 
-// LLM config for regime analysis and setup evaluation
+type baseFilterConfig = {
+  minBounces: bounceCount,
+  tolerance: tolerancePercent,
+  maxBaseDrift: driftPercent,
+}
+
+type exitPolicy = {
+  stopLoss: stopLossPercent,
+  takeProfit: takeProfitPercent,
+  maxHold: holdCandles,
+}
+
+type reentryPolicy =
+  | NoReentry
+  | ReentryOnce({cooldown: cooldownCandles})
+
+type llmProvider =
+  | OpenRouter
+  | OpenAI
+  | Anthropic
+  | Google
+  | Mistral
+  | Cohere
+  | Local
+
 @unboxed type llmApiKey = LlmApiKey(string)
 @unboxed type llmModel = LlmModel(string)
+@unboxed type llmModelId = LlmModelId(string)
+@unboxed type llmBaseUrl = LlmBaseUrl(string)
+
+type llmMember = {
+  provider: llmProvider,
+  modelId: llmModelId,
+  apiKey: llmApiKey,
+  apiBase: llmBaseUrl,
+  weight: weight,
+  timeout: timeoutMs,
+}
+
+type voteRule =
+  | SimpleMajority
+  | SuperMajority({minYes: minYesVotes})
+  | WeightedMajority({minWeight: weight})
+
+type committeeConfig = {
+  members: array<llmMember>,
+  rule: voteRule,
+  minConfidence: confidence,
+}
+
+type setupEvaluation =
+  | Disabled
+  | Committee(committeeConfig)
+
+type qflConfig = {
+  crackThreshold: crackPercent,
+  baseFilter: baseFilterConfig,
+  exitPolicy: exitPolicy,
+  reentry: reentryPolicy,
+  regimeGate: regimeGateConfig,
+  setupEvaluation: setupEvaluation,
+  lookbackCandles: candleCount,
+}
 
 @unboxed type intervalMs = IntervalMs(int)
 

@@ -79,7 +79,7 @@ let processSymbol = async (
       PaperExchange.setCurrentPrice(engine.exchange, symbol, currentPrice)
 
       // 3. Detect bases
-      let baseResult = BaseDetector.detectBases(candles, ~minBounces=engine.config.qfl.minBouncesForBase)
+      let baseResult = BaseDetector.detectBases(candles, ~config=engine.config.qfl.baseFilter)
       switch baseResult {
       | BaseDetector.BasesFound({bases}) =>
         BotState.updateBases(engine.state, symbol, bases)
@@ -115,7 +115,7 @@ let processSymbol = async (
           `${sym}: CRACK detected! ${crackPct->Float.toFixed(~digits=1)}% below base at ${baseLevel->Float.toFixed(~digits=2)}`,
         )
 
-        // LLM regime check if stale
+        // LLM regime check if stale (optional)
         switch engine.config.llm {
         | Some(llmConfig) =>
           if BotState.isRegimeStale(engine.state, llmConfig.regimeCheckIntervalMs) {
@@ -128,111 +128,38 @@ let processSymbol = async (
               Logger.error(`LLM regime check failed: ${BotError.toString(e)}`)
             }
           }
+        | None => ()
+        }
 
-          // LLM setup evaluation
-          if llmConfig.evaluateSetups {
-            let evalResult = await LlmEvaluator.evaluateSetup(
-              ~symbol,
-              ~base,
-              ~currentPrice,
-              ~crackPercent,
-              ~regime=engine.state.regime,
-              ~candles,
-              ~config=llmConfig,
-            )
-            switch evalResult {
-            | Ok(LlmEvaluator.Skip({reasoning})) =>
-              Logger.info(`${sym}: LLM says SKIP — ${reasoning}`)
-              Ok()
-            | Ok(LlmEvaluator.Go({reasoning})) =>
-              Logger.info(`${sym}: LLM says GO — ${reasoning}`)
-              // Proceed to risk check and order placement below
-              let Trade.Quantity(maxQty) = engine.config.riskLimits.maxPositionSize
-              let qty = Trade.Quantity(maxQty /. priceVal)
-              switch RiskManager.checkEntry(engine.state.riskManager, ~qty, ~price=currentPrice) {
-              | RiskManager.Blocked(err) =>
-                Logger.error(`${sym}: RISK BLOCKED — ${BotError.toString(err)}`)
-                Ok()
-              | RiskManager.Allowed =>
-                let orderResult = await PaperExchange.placeOrder(
-                  engine.exchange,
-                  ~symbol,
-                  ~side=Trade.Buy,
-                  ~orderType=Trade.Market,
-                  ~qty,
-                )
-                switch orderResult {
-                | Ok(trade) =>
-                  Db.insertTrade(engine.state.db, trade)->ignore
-                  let pos = Position.make(
-                    ~symbol,
-                    ~side=Position.Long,
-                    ~entryPrice=currentPrice,
-                    ~qty,
-                    ~openedAt=Trade.Timestamp(Date.now()),
-                  )
-                  Db.insertPosition(engine.state.db, pos)->ignore
-                  RiskManager.recordOpen(engine.state.riskManager)
-                  BotState.setOpenPosition(
-                    engine.state,
-                    symbol,
-                    Some({entryPrice: currentPrice, base}),
-                  )
-                  Logger.trade(`${sym}: BUY executed`)
-                  Ok()
-                | Error(e) =>
-                  Logger.error(`${sym}: Order failed — ${BotError.toString(e)}`)
-                  Error(e)
-                }
-              }
-            | Error(e) =>
-              Logger.error(`${sym}: LLM eval failed: ${BotError.toString(e)}`)
-              // Fall through without LLM — still place the trade
-              Ok()
-            }
-          } else {
-            // LLM setup eval disabled — go straight to risk check
-            let Trade.Quantity(maxQty) = engine.config.riskLimits.maxPositionSize
-            let qty = Trade.Quantity(maxQty /. priceVal)
-            switch RiskManager.checkEntry(engine.state.riskManager, ~qty, ~price=currentPrice) {
-            | RiskManager.Blocked(err) =>
-              Logger.error(`${sym}: RISK BLOCKED — ${BotError.toString(err)}`)
-              Ok()
-            | RiskManager.Allowed =>
-              let orderResult = await PaperExchange.placeOrder(
-                engine.exchange,
-                ~symbol,
-                ~side=Trade.Buy,
-                ~orderType=Trade.Market,
-                ~qty,
-              )
-              switch orderResult {
-              | Ok(trade) =>
-                Db.insertTrade(engine.state.db, trade)->ignore
-                let pos = Position.make(
-                  ~symbol,
-                  ~side=Position.Long,
-                  ~entryPrice=currentPrice,
-                  ~qty,
-                  ~openedAt=Trade.Timestamp(Date.now()),
-                )
-                Db.insertPosition(engine.state.db, pos)->ignore
-                RiskManager.recordOpen(engine.state.riskManager)
-                BotState.setOpenPosition(
-                  engine.state,
-                  symbol,
-                  Some({entryPrice: currentPrice, base}),
-                )
-                Logger.trade(`${sym}: BUY executed`)
-                Ok()
-              | Error(e) =>
-                Logger.error(`${sym}: Order failed — ${BotError.toString(e)}`)
-                Error(e)
-              }
-            }
+        // Committee setup evaluation
+        let proceedToEntry = switch engine.config.qfl.setupEvaluation {
+        | Config.Disabled => true
+        | Config.Committee(committee) =>
+          let evalResult = await LlmCommittee.evaluateSetup(
+            ~committee,
+            ~symbol,
+            ~base,
+            ~currentPrice,
+            ~crackPercent,
+            ~regime=engine.state.regime,
+            ~candles,
+          )
+          switch evalResult {
+          | Ok(LlmCommittee.Go({confidence, _})) =>
+            let Config.Confidence(c) = confidence
+            Logger.info(`${sym}: LLM committee GO (confidence ${c->Float.toFixed(~digits=2)})`)
+            true
+          | Ok(LlmCommittee.NoGo({confidence, _})) =>
+            let Config.Confidence(c) = confidence
+            Logger.info(`${sym}: LLM committee NO-GO (confidence ${c->Float.toFixed(~digits=2)})`)
+            false
+          | Error(e) =>
+            Logger.error(`${sym}: LLM committee error — ${BotError.toString(e)}`)
+            false
           }
-        | None =>
-          // No LLM config — go straight to risk check and order
+        }
+
+        if proceedToEntry {
           let Trade.Quantity(maxQty) = engine.config.riskLimits.maxPositionSize
           let qty = Trade.Quantity(maxQty /. priceVal)
           switch RiskManager.checkEntry(engine.state.riskManager, ~qty, ~price=currentPrice) {
@@ -271,6 +198,8 @@ let processSymbol = async (
               Error(e)
             }
           }
+        } else {
+          Ok()
         }
 
       | Ok(QflStrategy.BounceBack({entryPrice, _})) =>

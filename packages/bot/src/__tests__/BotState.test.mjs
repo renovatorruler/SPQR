@@ -64,7 +64,7 @@ describe("BotState", () => {
     it("updates bases for a symbol", () => {
       const state = BotState.make(db, riskLimits);
       const bases = [
-        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 100.0, maxLevel: 100.0 },
       ];
       BotState.updateBases(state, "BTCUSDT", bases);
       const ss = BotState.getSymbolState(state, "BTCUSDT");
@@ -75,7 +75,7 @@ describe("BotState", () => {
     it("persists bases to database", () => {
       const state = BotState.make(db, riskLimits);
       BotState.updateBases(state, "BTCUSDT", [
-        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 100.0, maxLevel: 100.0 },
       ]);
       const loaded = Db.loadBases(db, "BTCUSDT");
       expect(loaded.TAG).toBe("Ok");
@@ -88,7 +88,7 @@ describe("BotState", () => {
       const state = BotState.make(db, riskLimits);
       const posInfo = {
         entryPrice: 50000.0,
-        base: { priceLevel: 48000.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        base: { priceLevel: 48000.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 48000.0, maxLevel: 48000.0 },
       };
       BotState.setOpenPosition(state, "BTCUSDT", posInfo);
       const ss = BotState.getSymbolState(state, "BTCUSDT");
@@ -100,7 +100,7 @@ describe("BotState", () => {
       const state = BotState.make(db, riskLimits);
       BotState.setOpenPosition(state, "BTCUSDT", {
         entryPrice: 50000.0,
-        base: { priceLevel: 48000.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        base: { priceLevel: 48000.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000, minLevel: 48000.0, maxLevel: 48000.0 },
       });
       BotState.setOpenPosition(state, "BTCUSDT", undefined);
       const ss = BotState.getSymbolState(state, "BTCUSDT");

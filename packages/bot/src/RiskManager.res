@@ -10,7 +10,7 @@ type riskCheck =
 type t = {
   config: Config.riskLimits,
   mutable dailyPnl: Position.pnl,
-  mutable openPositionCount: int,
+  mutable openPositionCount: Config.openPositionsCount,
   mutable halted: bool,
 }
 
@@ -18,7 +18,7 @@ let make = (config: Config.riskLimits): t => {
   {
     config,
     dailyPnl: Position.Pnl(0.0),
-    openPositionCount: 0,
+    openPositionCount: Config.OpenPositionsCount(0),
     halted: false,
   }
 }
@@ -45,38 +45,45 @@ let checkEntry = (
       )
       rm.halted = true
       Blocked(err)
-    } else if rm.openPositionCount >= rm.config.maxOpenPositions {
-      // Check open position count
-      let err = BotError.RiskError(
-        MaxOpenPositionsReached({current: rm.openPositionCount, limit: rm.config.maxOpenPositions}),
-      )
-      rm.halted = true
-      Blocked(err)
     } else {
-      // Check daily loss
-      let Position.Pnl(currentLoss) = rm.dailyPnl
-      let Position.Pnl(maxLoss) = rm.config.maxDailyLoss
-      let absLoss = if currentLoss < 0.0 { -.currentLoss } else { currentLoss }
-      if currentLoss < 0.0 && absLoss >= maxLoss {
+      let Config.OpenPositionsCount(currentCount) = rm.openPositionCount
+      let Config.MaxOpenPositions(limitCount) = rm.config.maxOpenPositions
+      if currentCount >= limitCount {
+        // Check open position count
         let err = BotError.RiskError(
-          MaxDailyLossReached({currentLoss: absLoss, limit: maxLoss}),
+          MaxOpenPositionsReached({current: rm.openPositionCount, limit: rm.config.maxOpenPositions}),
         )
         rm.halted = true
         Blocked(err)
       } else {
-        Allowed
+        // Check daily loss
+        let Position.Pnl(currentLoss) = rm.dailyPnl
+        let Position.Pnl(maxLoss) = rm.config.maxDailyLoss
+        let absLoss = if currentLoss < 0.0 { -.currentLoss } else { currentLoss }
+        if currentLoss < 0.0 && absLoss >= maxLoss {
+          let err = BotError.RiskError(
+            MaxDailyLossReached({currentLoss: absLoss, limit: maxLoss}),
+          )
+          rm.halted = true
+          Blocked(err)
+        } else {
+          Allowed
+        }
       }
     }
   }
 }
 
 let recordOpen = (rm: t): unit => {
-  rm.openPositionCount = rm.openPositionCount + 1
+  let Config.OpenPositionsCount(currentCount) = rm.openPositionCount
+  rm.openPositionCount = Config.OpenPositionsCount(currentCount + 1)
 }
 
 let recordClose = (rm: t, pnl: Position.pnl): unit => {
-  let newCount = rm.openPositionCount - 1
-  rm.openPositionCount = if newCount > 0 { newCount } else { 0 }
+  let Config.OpenPositionsCount(currentCount) = rm.openPositionCount
+  let newCount = currentCount - 1
+  let normalizedCount = if newCount > 0 { newCount } else { 0 }
+  rm.openPositionCount = Config.OpenPositionsCount(normalizedCount)
   let Position.Pnl(currentPnl) = rm.dailyPnl
   let Position.Pnl(tradePnl) = pnl
   rm.dailyPnl = Position.Pnl(currentPnl +. tradePnl)

@@ -93,6 +93,26 @@ let checkStopLoss = (
   }
 }
 
+let checkTakeProfit = (
+  ~entryPrice: Trade.price,
+  ~currentPrice: Trade.price,
+  ~base: BaseDetector.base,
+  ~takeProfitTarget: Config.takeProfitPercent,
+  ~symbol: Trade.symbol,
+): qflSignal => {
+  let Trade.Price(current) = currentPrice
+  let Trade.Price(baseLevel) = base.priceLevel
+  let Trade.Price(entry) = entryPrice
+  let Config.TakeProfitPercent(tp) = takeProfitTarget
+  let target = entry +. (entry *. tp /. 100.0)
+  let effectiveTarget = if baseLevel > target { baseLevel } else { target }
+
+  switch current >= effectiveTarget {
+  | true => BounceBack({entryPrice, currentPrice, base, symbol})
+  | false => NoSignal
+  }
+}
+
 // Open position info needed for exit signal checks
 type openPositionInfo = {
   entryPrice: Trade.price,
@@ -111,7 +131,7 @@ let analyze = (
     Error(BotError.StrategyError(InsufficientData({required: 3, available: candles->Array.length})))
   } else {
     // Detect bases from candle history
-    let baseResult = BaseDetector.detectBases(candles, ~minBounces=config.minBouncesForBase)
+    let baseResult = BaseDetector.detectBases(candles, ~config=config.baseFilter)
 
     switch openPosition {
     | Some({entryPrice, base}) =>
@@ -120,14 +140,20 @@ let analyze = (
       let stopLoss = checkStopLoss(
         ~entryPrice,
         ~currentPrice,
-        ~stopLossThreshold=config.stopLossThreshold,
+        ~stopLossThreshold=config.exitPolicy.stopLoss,
         ~symbol,
       )
       switch stopLoss {
       | StopLossTriggered(_) => Ok(stopLoss)
       | _ =>
-        let bounce = checkForBounce(~entryPrice, ~currentPrice, ~base, ~symbol)
-        Ok(bounce)
+        let takeProfit = checkTakeProfit(
+          ~entryPrice,
+          ~currentPrice,
+          ~base,
+          ~takeProfitTarget=config.exitPolicy.takeProfit,
+          ~symbol,
+        )
+        Ok(takeProfit)
       }
 
     | None =>

@@ -21,7 +21,7 @@ let run = async () => {
   }
   Logger.info(`Loading config from: ${configPath}`)
 
-  let config = switch BotConfig.loadFromFile(configPath) {
+  let config = switch BotConfig.load() {
   | Ok(c) => c
   | Error(e) =>
     Logger.error(`Config error: ${BotError.toString(e)}`)

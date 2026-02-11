@@ -89,6 +89,8 @@ let restore = (db: Db.t, riskLimits: Config.riskLimits): result<t, BotError.t> =
           bounceCount: Config.BounceCount(1),
           firstSeen: openedAt,
           lastBounce: openedAt,
+          minLevel: pos.entryPrice,
+          maxLevel: pos.entryPrice,
         },
       }
       setOpenPosition(state, pos.symbol, Some(posInfo))

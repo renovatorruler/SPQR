@@ -93,11 +93,13 @@ describe("BaseDetector", () => {
 
   describe("detectBases", () => {
     it("returns NoBases for fewer than 3 candles", () => {
-      const result = BaseDetector.detectBases([candle(1, 100, 110, 90, 105, 1000, 2)], 2);
+      const baseFilter = { minBounces: 2, tolerance: 0.5, maxBaseDrift: 1.0 };
+      const result = BaseDetector.detectBases([candle(1, 100, 110, 90, 105, 1000, 2)], baseFilter);
       expect(result).toBe("NoBases");
     });
 
     it("returns NoBases when no local minimums exist", () => {
+      const baseFilter = { minBounces: 2, tolerance: 0.5, maxBaseDrift: 1.0 };
       // Ascending sequence — no local min
       const candles = [
         candle(1, 100, 110, 95, 105, 1000, 2),
@@ -105,11 +107,12 @@ describe("BaseDetector", () => {
         candle(3, 110, 120, 105, 115, 1000, 4),
         candle(4, 115, 125, 110, 120, 1000, 5),
       ];
-      const result = BaseDetector.detectBases(candles, 2);
+      const result = BaseDetector.detectBases(candles, baseFilter);
       expect(result).toBe("NoBases");
     });
 
     it("detects bases with enough bounces", () => {
+      const baseFilter = { minBounces: 2, tolerance: 0.5, maxBaseDrift: 1.0 };
       // Create a W pattern: two bounces at ~100
       const candles = [
         candle(1, 110, 115, 105, 112, 1000, 2),
@@ -118,7 +121,7 @@ describe("BaseDetector", () => {
         candle(4, 105, 108, 100.1, 103, 1000, 5), // min at 100.1
         candle(5, 108, 115, 105, 112, 1000, 6),
       ];
-      const result = BaseDetector.detectBases(candles, 2);
+      const result = BaseDetector.detectBases(candles, baseFilter);
       expect(result).not.toBe("NoBases");
       expect(result.TAG).toBe("BasesFound");
       expect(result.bases.length).toBe(1);
@@ -126,17 +129,19 @@ describe("BaseDetector", () => {
     });
 
     it("filters bases below minBounces", () => {
+      const baseFilter = { minBounces: 2, tolerance: 0.5, maxBaseDrift: 1.0 };
       // Single bounce — won't pass minBounces=2
       const candles = [
         candle(1, 110, 115, 105, 112, 1000, 2),
         candle(2, 105, 108, 100, 103, 1000, 3),  // single min
         candle(3, 108, 115, 105, 112, 1000, 4),
       ];
-      const result = BaseDetector.detectBases(candles, 2);
+      const result = BaseDetector.detectBases(candles, baseFilter);
       expect(result).toBe("NoBases");
     });
 
     it("sorts bases by bounce count descending", () => {
+      const baseFilter = { minBounces: 2, tolerance: 0.5, maxBaseDrift: 1.0 };
       // Two base zones, one with more bounces
       const candles = [
         candle(1, 210, 215, 205, 212, 1000, 2),
@@ -152,7 +157,7 @@ describe("BaseDetector", () => {
         candle(11, 105, 108, 100.2, 103, 1000, 12), // min at 100.2
         candle(12, 110, 115, 105, 108, 1000, 13),
       ];
-      const result = BaseDetector.detectBases(candles, 2);
+      const result = BaseDetector.detectBases(candles, baseFilter);
       expect(result.TAG).toBe("BasesFound");
       expect(result.bases.length).toBe(2);
       // Base at ~100 has 3 bounces, base at ~200 has 2

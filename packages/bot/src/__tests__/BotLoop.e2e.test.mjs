@@ -48,14 +48,28 @@ function makeConfig(overrides = {}) {
     },
     qfl: {
       crackThreshold: 3.0,
-      stopLossThreshold: 5.0,
-      takeProfitTarget: 2.0,
-      minBouncesForBase: 2,
+      baseFilter: {
+        minBounces: 2,
+        tolerance: 0.5,
+        maxBaseDrift: 1.0,
+      },
+      exitPolicy: {
+        stopLoss: 5.0,
+        takeProfit: 2.0,
+        maxHold: 16,
+      },
+      reentry: "NoReentry",
+      regimeGate: {
+        emaFast: 50,
+        emaSlow: 200,
+        emaSlopeLookback: 20,
+      },
+      setupEvaluation: "Disabled",
       lookbackCandles: 50,
     },
     llm: undefined,
     marketData: {
-      source: { exchangeId: "kraken" },
+      source: { TAG: "Ccxt", _0: { exchangeId: "kraken" } },
       defaultInterval: "1h",
     },
     engine: {
@@ -213,7 +227,14 @@ describe("BotLoop E2E", () => {
       // Simulate an open position at entry 97 (cracked below base at 100)
       BotState.setOpenPosition(state, "BTCUSDT", {
         entryPrice: 97.0,
-        base: { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        base: {
+          priceLevel: 100.0,
+          bounceCount: 3,
+          firstSeen: 1000,
+          lastBounce: 5000,
+          minLevel: 100.0,
+          maxLevel: 100.0,
+        },
       });
       RiskManager.recordOpen(state.riskManager);
 
@@ -248,7 +269,14 @@ describe("BotLoop E2E", () => {
       // Open position at 95 (cracked below base at 100)
       BotState.setOpenPosition(state, "BTCUSDT", {
         entryPrice: 95.0,
-        base: { priceLevel: 100.0, bounceCount: 3, firstSeen: 1000, lastBounce: 5000 },
+        base: {
+          priceLevel: 100.0,
+          bounceCount: 3,
+          firstSeen: 1000,
+          lastBounce: 5000,
+          minLevel: 100.0,
+          maxLevel: 100.0,
+        },
       });
       RiskManager.recordOpen(state.riskManager);
 

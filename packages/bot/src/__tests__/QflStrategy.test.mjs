@@ -2,7 +2,14 @@ import { describe, it, expect } from "vitest";
 import * as QflStrategy from "../QflStrategy.res.mjs";
 
 function makeBase(priceLevel, bounceCount = 3) {
-  return { priceLevel, bounceCount, firstSeen: 1000, lastBounce: 5000 };
+  return {
+    priceLevel,
+    bounceCount,
+    firstSeen: 1000,
+    lastBounce: 5000,
+    minLevel: priceLevel,
+    maxLevel: priceLevel,
+  };
 }
 
 describe("QflStrategy", () => {
@@ -91,9 +98,23 @@ describe("QflStrategy", () => {
 
     const qflConfig = {
       crackThreshold: 3.0,
-      stopLossThreshold: 5.0,
-      takeProfitTarget: 2.0,
-      minBouncesForBase: 2,
+      baseFilter: {
+        minBounces: 2,
+        tolerance: 0.5,
+        maxBaseDrift: 1.0,
+      },
+      exitPolicy: {
+        stopLoss: 5.0,
+        takeProfit: 2.0,
+        maxHold: 16,
+      },
+      reentry: "NoReentry",
+      regimeGate: {
+        emaFast: 50,
+        emaSlow: 200,
+        emaSlopeLookback: 20,
+      },
+      setupEvaluation: "Disabled",
       lookbackCandles: 50,
     };
 

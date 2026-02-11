@@ -287,6 +287,8 @@ let loadBases = (t: t, symbol: Trade.symbol): result<array<BaseDetector.base>, B
           bounceCount: Config.BounceCount(row["bounce_count"]),
           firstSeen: Trade.Timestamp(row["first_seen"]),
           lastBounce: Trade.Timestamp(row["last_bounce"]),
+          minLevel: Trade.Price(row["price_level"]),
+          maxLevel: Trade.Price(row["price_level"]),
         }: BaseDetector.base
       )
     })
