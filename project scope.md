@@ -39,3 +39,6 @@ Traditional QFL can get stuck holding bad trades for months/years when the marke
 ## Related Docs
 - `BACKTEST_PLAN.md`
 - `DASHBOARD_LIFTKIT_PLAN.md`
+
+## Deployment Notes
+- Dashboard should use standard Next.js build on Vercel (no `output: "export"`). Set framework preset to Next.js and keep default output directory `.next`.
