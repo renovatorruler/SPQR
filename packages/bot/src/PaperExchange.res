@@ -1,6 +1,9 @@
 // Paper trading exchange implementation (Decision #4, #12)
 // In-memory simulation. Also serves as test double.
 // Bounded trade history (Decision #16) — max 1000 trades in memory.
+//
+// Enhanced: accepts a price feed so paper trades use real market prices
+// instead of the old fixed $100 placeholder.
 
 let maxTradesInMemory = 1000
 
@@ -10,6 +13,7 @@ type state = {
   mutable trades: array<Trade.trade>,
   mutable positions: array<Position.position>,
   mutable nextTradeId: int,
+  mutable currentPrices: Dict.t<Trade.price>,
 }
 
 type t = {state: state, config: Config.exchangeConfig}
@@ -20,8 +24,15 @@ let make = (config: Config.exchangeConfig): result<t, BotError.t> => {
     trades: [],
     positions: [],
     nextTradeId: 1,
+    currentPrices: Dict.make(),
   }
   Ok({state, config})
+}
+
+// Called by bot loop each tick with real market prices
+let setCurrentPrice = (exchange: t, symbol: Trade.symbol, price: Trade.price): unit => {
+  let Trade.Symbol(sym) = symbol
+  exchange.state.currentPrices->Dict.set(sym, price)
 }
 
 let generateTradeId = (exchange: t): Trade.tradeId => {
@@ -39,12 +50,35 @@ let trimTrades = (exchange: t): unit => {
 }
 
 let getPrice = (exchange: t, symbol: Trade.symbol): promise<result<Trade.price, BotError.t>> => {
-  // Paper exchange returns a simulated price
-  let _ = exchange
   let Trade.Symbol(sym) = symbol
-  Logger.debug(`Paper price request for ${sym}`)
-  // Placeholder: return a fixed price. Real implementation would use historical data.
-  Promise.resolve(Ok(Trade.Price(100.0)))
+  switch exchange.state.currentPrices->Dict.get(sym) {
+  | Some(price) => Promise.resolve(Ok(price))
+  | None =>
+    Promise.resolve(
+      Error(
+        BotError.ExchangeError(
+          UnknownExchangeError({message: `No price set for ${sym} — call setCurrentPrice first`}),
+        ),
+      ),
+    )
+  }
+}
+
+let getMarketPrice = (exchange: t, symbol: Trade.symbol, orderType: Trade.orderType): result<Trade.price, BotError.t> => {
+  switch orderType {
+  | Trade.Limit({limitPrice}) => Ok(limitPrice)
+  | Trade.Market =>
+    let Trade.Symbol(sym) = symbol
+    switch exchange.state.currentPrices->Dict.get(sym) {
+    | Some(price) => Ok(price)
+    | None =>
+      Error(
+        BotError.ExchangeError(
+          UnknownExchangeError({message: `No market price for ${sym} — call setCurrentPrice first`}),
+        ),
+      )
+    }
+  }
 }
 
 let placeOrder = (
@@ -54,20 +88,12 @@ let placeOrder = (
   ~orderType: Trade.orderType,
   ~qty: Trade.quantity,
 ): promise<result<Trade.trade, BotError.t>> => {
-  let Trade.Quantity(qtyFloat) = qty
-
-  // Check balance for buys
-  let priceResult = switch orderType {
-  | Trade.Market => Ok(Trade.Price(100.0))
-  | Trade.Limit({limitPrice}) => Ok(limitPrice)
-  }
-
-  switch priceResult {
+  switch getMarketPrice(exchange, symbol, orderType) {
   | Error(e) => Promise.resolve(Error(e))
   | Ok(fillPrice) =>
+    let Trade.Quantity(qtyFloat) = qty
     let Trade.Price(priceFloat) = fillPrice
     let cost = priceFloat *. qtyFloat
-
     let Config.Balance(currentBalance) = exchange.state.balance
 
     switch side {
@@ -91,7 +117,6 @@ let placeOrder = (
         ~requestedQty=qty,
         ~createdAt=now,
       )
-      // Simulate instant fill
       let filledTrade = {
         ...trade,
         status: Trade.Filled({filledAt: now, filledPrice: fillPrice}),
@@ -104,8 +129,7 @@ let placeOrder = (
       Promise.resolve(Ok(filledTrade))
 
     | Trade.Sell =>
-      let Config.Balance(sellBalance) = exchange.state.balance
-      exchange.state.balance = Config.Balance(sellBalance +. cost)
+      exchange.state.balance = Config.Balance(currentBalance +. cost)
       let tradeId = generateTradeId(exchange)
       let now = Trade.Timestamp(Date.now())
       let trade = Trade.make(

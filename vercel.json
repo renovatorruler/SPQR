@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run res:build -w @spqr/shared && npm run res:build -w @spqr/dashboard && npm run build -w @spqr/dashboard",
+  "outputDirectory": "packages/dashboard/out",
+  "installCommand": "npm install --force",
+  "framework": "nextjs"
+}

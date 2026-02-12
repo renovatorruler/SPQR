@@ -1,180 +1,76 @@
-// Bot-specific config loader (Decision #5)
-// Loads config.json, decodes into Config.botConfig, fails fast on errors.
+// Bot configuration (typed ReScript, no JSON)
+// All values are explicit and domain-typed per RESCRIPT_MANIFESTO_LLM.MD
 
-let decodeExchangeId = (s: string): option<Config.exchangeId> => {
-  switch s {
-  | "binance" => Some(Binance)
-  | "uniswap" => Some(Uniswap)
-  | "jupiter" => Some(Jupiter)
-  | "paper" => Some(PaperExchange)
-  | _ => None
-  }
+let config: Config.botConfig = {
+  tradingMode: Config.Paper,
+  exchange: {
+    exchangeId: Config.Kraken,
+    baseUrl: None,
+    apiKey: None,
+    apiSecret: None,
+  },
+  symbols: [
+    Trade.Symbol("BTCUSD"),
+    Trade.Symbol("ETHUSD"),
+    Trade.Symbol("SOLUSD"),
+  ],
+  riskLimits: {
+    maxPositionSize: Trade.Quantity(1000.0),
+    maxOpenPositions: Config.MaxOpenPositions(3),
+    maxDailyLoss: Position.Pnl(250.0),
+  },
+  qfl: {
+    crackThreshold: Config.CrackPercent(3.0),
+    baseFilter: {
+      minBounces: Config.BounceCount(2),
+      tolerance: Config.TolerancePercent(0.5),
+      maxBaseDrift: Config.DriftPercent(1.0),
+    },
+    exitPolicy: {
+      stopLoss: Config.StopLossPercent(5.0),
+      takeProfit: Config.TakeProfitPercent(2.0),
+      maxHold: Config.HoldCandles(16),
+    },
+    reentry: Config.ReentryOnce({cooldown: Config.CooldownCandles(32)}),
+    regimeGate: {
+      emaFast: Config.EmaPeriod(50),
+      emaSlow: Config.EmaPeriod(200),
+      emaSlopeLookback: Config.EmaSlopeLookback(20),
+    },
+    setupEvaluation:
+      Config.Committee({
+        members: [
+          {
+            provider: Config.OpenRouter,
+            modelId: Config.LlmModelId("openai/gpt-5.3-codex"),
+            apiKey: Config.LlmApiKey("OPENROUTER_API_KEY"),
+            apiBase: Config.LlmBaseUrl("https://openrouter.ai/api/v1"),
+            weight: Config.Weight(0.6),
+            timeout: Config.TimeoutMs(15000),
+          },
+          {
+            provider: Config.OpenRouter,
+            modelId: Config.LlmModelId("anthropic/claude-3.5-sonnet"),
+            apiKey: Config.LlmApiKey("OPENROUTER_API_KEY"),
+            apiBase: Config.LlmBaseUrl("https://openrouter.ai/api/v1"),
+            weight: Config.Weight(0.4),
+            timeout: Config.TimeoutMs(15000),
+          },
+        ],
+        rule: Config.WeightedMajority({minWeight: Config.Weight(0.6)}),
+        minConfidence: Config.Confidence(0.6),
+      }),
+    lookbackCandles: Config.CandleCount(200),
+  },
+  llm: None,
+  marketData: {
+    source: Config.Ccxt({exchangeId: Config.ExchangeName("kraken")}),
+    defaultInterval: Config.Interval("15m"),
+  },
+  engine: {
+    pollIntervalMs: Config.PollIntervalMs(30000),
+    closeOnShutdown: false,
+  },
 }
 
-let decodeTradingMode = (s: string): option<Config.tradingMode> => {
-  switch s {
-  | "paper" => Some(Paper)
-  | "live" => Some(Live)
-  | _ => None
-  }
-}
-
-let decodeExchangeConfig = (obj: Dict.t<JSON.t>): result<Config.exchangeConfig, BotError.t> => {
-  let exchangeIdStr =
-    obj->Dict.get("exchangeId")->Option.flatMap(JSON.Decode.string)
-
-  switch exchangeIdStr {
-  | None =>
-    Error(BotError.ConfigError(MissingField({fieldName: "exchange.exchangeId"})))
-  | Some(idStr) =>
-    switch decodeExchangeId(idStr) {
-    | None =>
-      Error(
-        BotError.ConfigError(
-          InvalidValue({
-            fieldName: "exchange.exchangeId",
-            given: idStr,
-            expected: "binance | uniswap | jupiter | paper",
-          }),
-        ),
-      )
-    | Some(exchangeId) =>
-      let baseUrl =
-        obj
-        ->Dict.get("baseUrl")
-        ->Option.flatMap(JSON.Decode.string)
-        ->Option.map(s => Config.BaseUrl(s))
-      let apiKey =
-        obj
-        ->Dict.get("apiKey")
-        ->Option.flatMap(JSON.Decode.string)
-        ->Option.map(s => Config.ApiKey(s))
-      let apiSecret =
-        obj
-        ->Dict.get("apiSecret")
-        ->Option.flatMap(JSON.Decode.string)
-        ->Option.map(s => Config.ApiSecret(s))
-      Ok({
-        Config.exchangeId,
-        baseUrl,
-        apiKey,
-        apiSecret,
-      })
-    }
-  }
-}
-
-let decodeRiskLimits = (obj: Dict.t<JSON.t>): result<Config.riskLimits, BotError.t> => {
-  let maxPositionSize =
-    obj->Dict.get("maxPositionSize")->Option.flatMap(JSON.Decode.float)
-  let maxOpenPositions =
-    obj
-    ->Dict.get("maxOpenPositions")
-    ->Option.flatMap(JSON.Decode.float)
-    ->Option.map(Float.toInt)
-  let maxDailyLoss =
-    obj->Dict.get("maxDailyLoss")->Option.flatMap(JSON.Decode.float)
-
-  switch (maxPositionSize, maxOpenPositions, maxDailyLoss) {
-  | (Some(mps), Some(mop), Some(mdl)) =>
-    Ok({
-      Config.maxPositionSize: Trade.Quantity(mps),
-      maxOpenPositions: mop,
-      maxDailyLoss: Position.Pnl(mdl),
-    })
-  | (None, _, _) =>
-    Error(BotError.ConfigError(MissingField({fieldName: "riskLimits.maxPositionSize"})))
-  | (_, None, _) =>
-    Error(BotError.ConfigError(MissingField({fieldName: "riskLimits.maxOpenPositions"})))
-  | (_, _, None) =>
-    Error(BotError.ConfigError(MissingField({fieldName: "riskLimits.maxDailyLoss"})))
-  }
-}
-
-let decodeSymbols = (arr: array<JSON.t>): result<array<Trade.symbol>, BotError.t> => {
-  let symbols = arr->Array.filterMap(JSON.Decode.string)
-  if symbols->Array.length != arr->Array.length {
-    Error(BotError.ConfigError(InvalidValue({
-      fieldName: "symbols",
-      given: "non-string values",
-      expected: "array of strings",
-    })))
-  } else {
-    Ok(symbols->Array.map(s => Trade.Symbol(s)))
-  }
-}
-
-let decode = (json: JSON.t): result<Config.botConfig, BotError.t> => {
-  switch json->JSON.Decode.object {
-  | None => Error(BotError.ConfigError(ParseFailed({message: "Expected JSON object"})))
-  | Some(root) =>
-    // Decode tradingMode
-    let tradingModeStr =
-      root->Dict.get("tradingMode")->Option.flatMap(JSON.Decode.string)
-    switch tradingModeStr {
-    | None =>
-      Error(BotError.ConfigError(MissingField({fieldName: "tradingMode"})))
-    | Some(modeStr) =>
-      switch decodeTradingMode(modeStr) {
-      | None =>
-        Error(
-          BotError.ConfigError(
-            InvalidValue({
-              fieldName: "tradingMode",
-              given: modeStr,
-              expected: "paper | live",
-            }),
-          ),
-        )
-      | Some(tradingMode) =>
-        // Decode exchange
-        let exchangeObj =
-          root->Dict.get("exchange")->Option.flatMap(JSON.Decode.object)
-        switch exchangeObj {
-        | None =>
-          Error(BotError.ConfigError(MissingField({fieldName: "exchange"})))
-        | Some(exObj) =>
-          switch decodeExchangeConfig(exObj) {
-          | Error(e) => Error(e)
-          | Ok(exchange) =>
-            // Decode symbols
-            let symbolsArr =
-              root->Dict.get("symbols")->Option.flatMap(JSON.Decode.array)
-            switch symbolsArr {
-            | None =>
-              Error(BotError.ConfigError(MissingField({fieldName: "symbols"})))
-            | Some(symArr) =>
-              switch decodeSymbols(symArr) {
-              | Error(e) => Error(e)
-              | Ok(symbols) =>
-                // Decode riskLimits
-                let riskObj =
-                  root->Dict.get("riskLimits")->Option.flatMap(JSON.Decode.object)
-                switch riskObj {
-                | None =>
-                  Error(
-                    BotError.ConfigError(MissingField({fieldName: "riskLimits"})),
-                  )
-                | Some(rlObj) =>
-                  decodeRiskLimits(rlObj)->Result.map(riskLimits => {
-                    Config.tradingMode,
-                    exchange,
-                    symbols,
-                    riskLimits,
-                  })
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-let loadFromFile = async (path: string): result<Config.botConfig, BotError.t> => {
-  // Note: Node.js file reading would go here.
-  // For now, this is a placeholder that documents the intended API.
-  let _ = path
-  Error(BotError.ConfigError(FileNotFound({path: path})))
-}
+let load = (): result<Config.botConfig, BotError.t> => Ok(config)

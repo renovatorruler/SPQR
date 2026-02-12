@@ -2,17 +2,23 @@ node_modules/
 
 # ReScript build artifacts
 lib/
+# Un-ignore LiftKit's src/lib/ (installed CSS/types)
+!**/src/lib/
 .bsb.lock
 .merlin
 
 # ReScript compiled output (in-source)
 *.res.mjs
 
-# Vite
+# Build output
 dist/
+out/
+.next/
 
 # SQLite
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
@@ -23,6 +29,9 @@ config.json
 .env
 .env.local
 .env.*.local
+
+# Next.js auto-generated
+next-env.d.ts
 
 # OS
 .DS_Store
