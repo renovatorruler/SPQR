@@ -78,7 +78,7 @@ let run = async () => {
   // 5. Initialize market data (CCXT — supports 100+ exchanges)
   let marketData = switch CcxtMarketData.make(config.marketData) {
   | Ok(md) =>
-    let Config.Ccxt({exchangeId: Config.ExchangeName(exName)}) = config.marketData.source
+    let Config.Ccxt({exchangeId: Config.CcxtExchangeId(exName)}) = config.marketData.source
     Logger.info(`Market data source initialized (CCXT: ${exName})`)
     md
   | Error(e) =>

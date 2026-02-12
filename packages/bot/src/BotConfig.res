@@ -64,8 +64,8 @@ let config: Config.botConfig = {
   },
   llm: None,
   marketData: {
-    source: Config.Ccxt({exchangeId: Config.ExchangeName("kraken")}),
-    defaultInterval: Config.Interval("15m"),
+    source: Config.Ccxt({exchangeId: Config.CcxtExchangeId("kraken")}),
+    defaultInterval: Config.FifteenMinutes,
   },
   engine: {
     pollIntervalMs: Config.PollIntervalMs(30000),

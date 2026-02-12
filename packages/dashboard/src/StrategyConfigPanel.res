@@ -19,14 +19,14 @@ let setupEvalToString = (eval: Config.setupEvaluation): string => {
 // Individual config row — label + value pair
 module ConfigRow = {
   @react.component
-  let make = (~label: string, ~value: string, ~icon: string="circle", ~valueColor: string="onsurface") => {
+  let make = (~label: string, ~value: string, ~icon: string="circle", ~valueColor: LiftKit.color=#onsurface) => {
     <div>
-      <LiftKit.Text fontClass="caption-bold" color="onsurfacevariant">
+      <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
         {React.string(label)}
       </LiftKit.Text>
-      <LiftKit.Row alignItems="center" gap="2xs">
-        <LiftKit.Icon name=icon fontClass="body" color=valueColor />
-        <LiftKit.Text fontClass="body"> {React.string(value)} </LiftKit.Text>
+      <LiftKit.Row alignItems=#center gap=#"2xs">
+        <LiftKit.Icon name=icon fontClass=#body color=valueColor />
+        <LiftKit.Text fontClass=#body> {React.string(value)} </LiftKit.Text>
       </LiftKit.Row>
     </div>
   }
@@ -46,11 +46,11 @@ let make = (~config: Config.qflConfig) => {
   let Config.EmaSlopeLookback(slopeLookback) = config.regimeGate.emaSlopeLookback
   let Config.CandleCount(lookback) = config.lookbackCandles
 
-  <LiftKit.Card variant="fill" bgColor="surfacecontainerlow">
+  <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
     <div className="spqr-section-gap">
-      <LiftKit.Row alignItems="center" gap="xs">
-        <LiftKit.Icon name="settings" fontClass="title2" color="onsurfacevariant" />
-        <LiftKit.Heading tag="h3" fontClass="heading-bold">
+      <LiftKit.Row alignItems=#center gap=#xs>
+        <LiftKit.Icon name="settings" fontClass=#title2 color=#onsurfacevariant />
+        <LiftKit.Heading tag=#h3 fontClass=#"heading-bold">
           {React.string("Strategy Parameters")}
         </LiftKit.Heading>
       </LiftKit.Row>
@@ -69,13 +69,13 @@ let make = (~config: Config.qflConfig) => {
           label="Stop Loss"
           value={`${stopLoss->Float.toFixed(~digits=2)}%`}
           icon="shield-alert"
-          valueColor="error"
+          valueColor=#error
         />
         <ConfigRow
           label="Take Profit"
           value={`${tp->Float.toFixed(~digits=2)}%`}
           icon="target"
-          valueColor="primary"
+          valueColor=#primary
         />
         <ConfigRow
           label="Max Hold"

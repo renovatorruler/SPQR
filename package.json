@@ -7,10 +7,14 @@
   "scripts": {
     "res:build": "npm run res:build --workspaces",
     "test": "npm run test --workspaces --if-present",
+    "test:all": "vitest run --config vitest.workspace.ts",
     "bot:build": "npm run res:build -w @spqr/bot",
     "bot:watch": "npm run res:watch -w @spqr/bot",
     "bot:start": "npm run start -w @spqr/bot",
     "dash:dev": "npm run dev -w @spqr/dashboard",
     "dash:build": "npm run build -w @spqr/dashboard"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

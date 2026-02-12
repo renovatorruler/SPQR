@@ -34,8 +34,28 @@ type riskLimits = {
   maxDailyLoss: Position.pnl,
 }
 
+// Variants over strings — candle interval (Manifesto Principle 2)
+type interval =
+  | @as("1m") OneMinute
+  | @as("5m") FiveMinutes
+  | @as("15m") FifteenMinutes
+  | @as("1h") OneHour
+  | @as("4h") FourHours
+  | @as("1d") OneDay
+  | @as("1w") OneWeek
+
+let intervalToString = (i: interval): string =>
+  switch i {
+  | OneMinute => "1m"
+  | FiveMinutes => "5m"
+  | FifteenMinutes => "15m"
+  | OneHour => "1h"
+  | FourHours => "4h"
+  | OneDay => "1d"
+  | OneWeek => "1w"
+  }
+
 // Domain-typed primitives for market data and strategy (Manifesto Principle 1)
-@unboxed type interval = Interval(string) // "1m", "5m", "15m", "1h", "4h", "1d", "1w"
 @unboxed type volume = Volume(float)
 @unboxed type crackPercent = CrackPercent(float)
 @unboxed type stopLossPercent = StopLossPercent(float)
@@ -146,10 +166,12 @@ type llmConfig = {
 }
 
 // Market data source — CCXT unified exchange library
-@unboxed type exchangeName = ExchangeName(string)
+// ccxtExchangeId is a string wrapper for CCXT's 100+ dynamic exchange names (e.g. "kraken", "binance")
+// distinct from exchangeId variant which enumerates supported exchanges at compile time
+@unboxed type ccxtExchangeId = CcxtExchangeId(string)
 
 type marketDataSource =
-  | Ccxt({exchangeId: exchangeName})
+  | Ccxt({exchangeId: ccxtExchangeId})
 
 type marketDataConfig = {
   source: marketDataSource,

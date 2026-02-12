@@ -58,15 +58,15 @@ let make = () => {
     lookbackCandles: Config.CandleCount(200),
   }
 
-  <LiftKit.Container maxWidth="lg">
-    <LiftKit.Section py="md" px="sm">
+  <LiftKit.Container maxWidth=#lg>
+    <LiftKit.Section py=#md px=#sm>
       // Header
       <div className="spqr-header">
-        <LiftKit.Row alignItems="center" justifyContent="space-between" gap="md" wrapChildren=true>
-          <LiftKit.Heading tag="h1" fontClass="display2-bold">
+        <LiftKit.Row alignItems=#center justifyContent=#"space-between" gap=#md wrapChildren=true>
+          <LiftKit.Heading tag=#h1 fontClass=#"display2-bold">
             {React.string("SPQR Trading Bot")}
           </LiftKit.Heading>
-          <LiftKit.Badge icon="activity" color="primary" scale="md" />
+          <LiftKit.Badge icon="activity" color=#primary scale=#md />
         </LiftKit.Row>
       </div>
       // Main content
@@ -74,7 +74,7 @@ let make = () => {
         <Dashboard />
         <BacktestSummary metrics={backtestResult.metrics} />
         <BacktestEquityCurve equity={backtestResult.equityCurve} />
-        <LiftKit.Grid columns=2 gap="md" autoResponsive=true>
+        <LiftKit.Grid columns=2 gap=#md autoResponsive=true>
           <StrategyConfigPanel config=qflConfig />
           <BacktestTrades trades={backtestResult.trades} />
         </LiftKit.Grid>

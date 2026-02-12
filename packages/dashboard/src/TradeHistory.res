@@ -58,9 +58,9 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
 
   <div className="spqr-section-gap">
     {if showHeading {
-      <LiftKit.Row alignItems="center" gap="xs">
-        <LiftKit.Icon name="list" fontClass="title2" color="onsurfacevariant" />
-        <LiftKit.Heading tag="h2" fontClass="title1-bold">
+      <LiftKit.Row alignItems=#center gap=#xs>
+        <LiftKit.Icon name="list" fontClass=#title2 color=#onsurfacevariant />
+        <LiftKit.Heading tag=#h2 fontClass=#"title1-bold">
           {React.string("Trade History")}
         </LiftKit.Heading>
       </LiftKit.Row>
@@ -69,10 +69,10 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
     }}
     {switch state {
     | NoTrades =>
-      <LiftKit.Card variant="outline">
-        <LiftKit.Row alignItems="center" gap="sm">
-          <LiftKit.Icon name="inbox" fontClass="body" color="onsurfacevariant" />
-          <LiftKit.Text fontClass="body" color="onsurfacevariant">
+      <LiftKit.Card variant=#outline>
+        <LiftKit.Row alignItems=#center gap=#sm>
+          <LiftKit.Icon name="inbox" fontClass=#body color=#onsurfacevariant />
+          <LiftKit.Text fontClass=#body color=#onsurfacevariant>
             {React.string("No trades yet. The bot has not executed any trades.")}
           </LiftKit.Text>
         </LiftKit.Row>
@@ -84,32 +84,32 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
             <thead>
               <tr>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Time")}
                   </LiftKit.Text>
                 </th>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Symbol")}
                   </LiftKit.Text>
                 </th>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Side")}
                   </LiftKit.Text>
                 </th>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Type")}
                   </LiftKit.Text>
                 </th>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Qty")}
                   </LiftKit.Text>
                 </th>
                 <th>
-                  <LiftKit.Text tag="span" fontClass="caption-bold" color="onsurfacevariant">
+                  <LiftKit.Text tag=#span fontClass=#"caption-bold" color=#onsurfacevariant>
                     {React.string("Status")}
                   </LiftKit.Text>
                 </th>
@@ -123,12 +123,12 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
                 let Trade.Quantity(qty) = trade.requestedQty
                 <tr key=id>
                   <td>
-                    <LiftKit.Text tag="span" fontClass="body-mono">
+                    <LiftKit.Text tag=#span fontClass=#"body-mono">
                       {React.string(trade.createdAt->formatTimestamp)}
                     </LiftKit.Text>
                   </td>
                   <td>
-                    <LiftKit.Text tag="span" fontClass="body-bold">
+                    <LiftKit.Text tag=#span fontClass=#"body-bold">
                       {React.string(sym)}
                     </LiftKit.Text>
                   </td>
@@ -138,17 +138,17 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
                     </span>
                   </td>
                   <td>
-                    <LiftKit.Text tag="span" fontClass="body">
+                    <LiftKit.Text tag=#span fontClass=#body>
                       {React.string(trade.orderType->orderTypeToString)}
                     </LiftKit.Text>
                   </td>
                   <td>
-                    <LiftKit.Text tag="span" fontClass="body-mono">
+                    <LiftKit.Text tag=#span fontClass=#"body-mono">
                       {React.string(qty->Float.toString)}
                     </LiftKit.Text>
                   </td>
                   <td>
-                    <LiftKit.Text tag="span" fontClass="body">
+                    <LiftKit.Text tag=#span fontClass=#body>
                       {React.string(trade.status->statusToString)}
                     </LiftKit.Text>
                   </td>

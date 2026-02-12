@@ -10,7 +10,8 @@
     "res:build": "rescript build",
     "res:watch": "rescript build -w",
     "res:clean": "rescript clean",
-    "add": "liftkit add"
+    "add": "liftkit add",
+    "test": "vitest run"
   },
   "dependencies": {
     "@csstools/normalize.css": "^12.1.1",
@@ -31,6 +32,7 @@
     "@types/react-dom": "19.1.6",
     "rescript": "12.1.0",
     "shadcn": "2.7.0",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^3.2.4"
   }
 }

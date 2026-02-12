@@ -22,7 +22,7 @@ let toUnifiedSymbol = (symbol: Trade.symbol): string => {
 }
 
 let make = (config: Config.marketDataConfig): result<t, BotError.t> => {
-  let Config.Ccxt({exchangeId: Config.ExchangeName(id)}) = config.source
+  let Config.Ccxt({exchangeId: Config.CcxtExchangeId(id)}) = config.source
   try {
     let exchange = CcxtBindings.createExchange(id)
     Ok({config, exchange})
@@ -67,7 +67,7 @@ let getCandles = async (
   ~limit: Config.candleCount,
 ): result<array<Config.candlestick>, BotError.t> => {
   let Trade.Symbol(sym) = symbol
-  let Config.Interval(ivl) = interval
+  let ivl = Config.intervalToString(interval)
   let Config.CandleCount(lim) = limit
   let unifiedSymbol = toUnifiedSymbol(symbol)
 
