@@ -19,8 +19,17 @@ html {
 
 body {
   margin: 0;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   background-color: var(--lk-background);
   color: var(--lk-onsurface);
+}
+
+code,
+pre,
+.body-mono,
+.caption-mono,
+.label-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 /* --- Tablet breakpoint for LiftKit Grid ---
