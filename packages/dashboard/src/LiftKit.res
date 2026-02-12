@@ -3,7 +3,11 @@
 
 module Container = {
   @module("./components/container") @react.component
-  external make: (~maxWidth: string=?, ~children: React.element=?) => React.element = "default"
+  external make: (
+    ~maxWidth: string=?,
+    ~className: string=?,
+    ~children: React.element=?,
+  ) => React.element = "default"
 }
 
 module Card = {
@@ -11,7 +15,9 @@ module Card = {
   external make: (
     ~scaleFactor: string=?,
     ~variant: string=?,
+    ~material: string=?,
     ~bgColor: string=?,
+    ~isClickable: bool=?,
     ~className: string=?,
     ~children: React.element=?,
   ) => React.element = "default"
@@ -56,6 +62,7 @@ module Section = {
     ~padding: string=?,
     ~py: string=?,
     ~px: string=?,
+    ~className: string=?,
     ~children: React.element=?,
   ) => React.element = "default"
 }
@@ -66,6 +73,8 @@ module Row = {
     ~alignItems: string=?,
     ~justifyContent: string=?,
     ~gap: string=?,
+    ~wrapChildren: bool=?,
+    ~className: string=?,
     ~children: React.element=?,
   ) => React.element = "default"
 }
@@ -76,5 +85,17 @@ module Badge = {
     ~icon: string=?,
     ~color: string=?,
     ~scale: string=?,
+    ~className: string=?,
+  ) => React.element = "default"
+}
+
+module Icon = {
+  @module("./components/icon") @react.component
+  external make: (
+    ~name: string=?,
+    ~fontClass: string=?,
+    ~color: string=?,
+    ~strokeWidth: int=?,
+    ~className: string=?,
   ) => React.element = "default"
 }

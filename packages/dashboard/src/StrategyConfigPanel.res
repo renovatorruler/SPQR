@@ -1,18 +1,34 @@
-// Strategy configuration display
+// Strategy configuration display — QFL parameters
 
 let reentryToString = (reentry: Config.reentryPolicy): string => {
   switch reentry {
   | Config.NoReentry => "No re-entry"
   | Config.ReentryOnce({cooldown}) =>
     let Config.CooldownCandles(c) = cooldown
-    `Re-enter once after ${c->Int.toString} candles`
+    `Once after ${c->Int.toString} candles`
   }
 }
 
 let setupEvalToString = (eval: Config.setupEvaluation): string => {
   switch eval {
-  | Config.Disabled => "LLM evaluation disabled"
-  | Config.Committee(_) => "LLM committee enabled"
+  | Config.Disabled => "Disabled"
+  | Config.Committee(_) => "Committee enabled"
+  }
+}
+
+// Individual config row — label + value pair
+module ConfigRow = {
+  @react.component
+  let make = (~label: string, ~value: string, ~icon: string="circle", ~valueColor: string="onsurface") => {
+    <div>
+      <LiftKit.Text fontClass="caption-bold" color="onsurfacevariant">
+        {React.string(label)}
+      </LiftKit.Text>
+      <LiftKit.Row alignItems="center" gap="2xs">
+        <LiftKit.Icon name=icon fontClass="body" color=valueColor />
+        <LiftKit.Text fontClass="body"> {React.string(value)} </LiftKit.Text>
+      </LiftKit.Row>
+    </div>
   }
 }
 
@@ -30,18 +46,63 @@ let make = (~config: Config.qflConfig) => {
   let Config.EmaSlopeLookback(slopeLookback) = config.regimeGate.emaSlopeLookback
   let Config.CandleCount(lookback) = config.lookbackCandles
 
-  <LiftKit.Section py="md">
-    <LiftKit.Heading tag="h2" fontClass="title1-bold">
-      {React.string("Strategy Parameters")}
-    </LiftKit.Heading>
-    <LiftKit.Card>
-      <LiftKit.Text fontClass="body">{React.string(`Crack threshold: ${crack->Float.toFixed(~digits=2)}%`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`Base filter: min bounces ${minBounces->Int.toString}, tolerance ${tol->Float.toFixed(~digits=2)}%, max drift ${drift->Float.toFixed(~digits=2)}%`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`Exit policy: stop ${stopLoss->Float.toFixed(~digits=2)}%, take profit ${tp->Float.toFixed(~digits=2)}%, max hold ${maxHold->Int.toString} candles`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`Re-entry: ${config.reentry->reentryToString}`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`Regime gate: EMA ${emaFast->Int.toString}/${emaSlow->Int.toString}, slope lookback ${slopeLookback->Int.toString}`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`LLM setup evaluation: ${config.setupEvaluation->setupEvalToString}`)}</LiftKit.Text>
-      <LiftKit.Text fontClass="body">{React.string(`Lookback candles: ${lookback->Int.toString}`)}</LiftKit.Text>
-    </LiftKit.Card>
-  </LiftKit.Section>
+  <LiftKit.Card variant="fill" bgColor="surfacecontainerlow">
+    <div className="spqr-section-gap">
+      <LiftKit.Row alignItems="center" gap="xs">
+        <LiftKit.Icon name="settings" fontClass="title2" color="onsurfacevariant" />
+        <LiftKit.Heading tag="h3" fontClass="heading-bold">
+          {React.string("Strategy Parameters")}
+        </LiftKit.Heading>
+      </LiftKit.Row>
+      <div className="spqr-config-grid">
+        <ConfigRow
+          label="Crack Threshold"
+          value={`${crack->Float.toFixed(~digits=2)}%`}
+          icon="zap"
+        />
+        <ConfigRow
+          label="Base Filter"
+          value={`${minBounces->Int.toString} bounces, ${tol->Float.toFixed(~digits=2)}% tol, ${drift->Float.toFixed(~digits=2)}% drift`}
+          icon="filter"
+        />
+        <ConfigRow
+          label="Stop Loss"
+          value={`${stopLoss->Float.toFixed(~digits=2)}%`}
+          icon="shield-alert"
+          valueColor="error"
+        />
+        <ConfigRow
+          label="Take Profit"
+          value={`${tp->Float.toFixed(~digits=2)}%`}
+          icon="target"
+          valueColor="primary"
+        />
+        <ConfigRow
+          label="Max Hold"
+          value={`${maxHold->Int.toString} candles`}
+          icon="clock"
+        />
+        <ConfigRow
+          label="Re-entry"
+          value={config.reentry->reentryToString}
+          icon="rotate-ccw"
+        />
+        <ConfigRow
+          label="Regime Gate"
+          value={`EMA ${emaFast->Int.toString}/${emaSlow->Int.toString}, slope ${slopeLookback->Int.toString}`}
+          icon="shield"
+        />
+        <ConfigRow
+          label="LLM Evaluation"
+          value={config.setupEvaluation->setupEvalToString}
+          icon="brain"
+        />
+        <ConfigRow
+          label="Lookback"
+          value={`${lookback->Int.toString} candles`}
+          icon="eye"
+        />
+      </div>
+    </div>
+  </LiftKit.Card>
 }

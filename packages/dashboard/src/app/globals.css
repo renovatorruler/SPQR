@@ -1,1 +1,158 @@
 @import "@/lib/css/index.css";
+
+/* =============================================
+   SPQR Dashboard — Global Responsive Overrides
+   ============================================= */
+
+/* --- Base resets --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--lk-background);
+  color: var(--lk-onsurface);
+}
+
+/* --- Tablet breakpoint for LiftKit Grid ---
+   LiftKit only has a 480px breakpoint for autoResponsive.
+   Add a tablet step: 3+ column grids collapse to 2 columns. */
+
+@media (max-width: 768px) {
+  [data-lk-component="grid"][data-lk-grid-auto-responsive="true"][data-lk-grid-columns="3"],
+  [data-lk-component="grid"][data-lk-grid-auto-responsive="true"][data-lk-grid-columns="4"] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- Header responsive --- */
+@media (max-width: 480px) {
+  .spqr-header [data-lk-component="heading"] {
+    font-size: 1.6em;
+  }
+}
+
+/* --- Trade table responsive --- */
+.spqr-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.spqr-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.spqr-table th {
+  text-align: left;
+  padding: var(--lk-size-xs) var(--lk-size-sm);
+  border-bottom: 1px solid var(--lk-outlinevariant);
+}
+
+.spqr-table td {
+  padding: var(--lk-size-xs) var(--lk-size-sm);
+  border-bottom: 1px solid var(--lk-outlinevariant);
+  vertical-align: middle;
+}
+
+.spqr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .spqr-table {
+    font-size: 0.875em;
+  }
+
+  .spqr-table th,
+  .spqr-table td {
+    padding: var(--lk-size-2xs) var(--lk-size-xs);
+  }
+}
+
+/* --- Metric card layout --- */
+.spqr-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lk-size-2xs);
+}
+
+/* --- Config grid --- */
+.spqr-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--lk-size-sm) var(--lk-size-lg);
+}
+
+@media (max-width: 768px) {
+  .spqr-config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Status indicator dot --- */
+.spqr-status-dot {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  margin-right: var(--lk-size-2xs);
+  vertical-align: middle;
+}
+
+.spqr-status-dot--online {
+  background-color: var(--lk-primary);
+  box-shadow: 0 0 6px var(--lk-primary);
+}
+
+.spqr-status-dot--offline {
+  background-color: var(--lk-outlinevariant);
+}
+
+.spqr-status-dot--error {
+  background-color: var(--lk-error);
+  box-shadow: 0 0 6px var(--lk-error);
+}
+
+/* --- Side badges --- */
+.spqr-side-buy {
+  color: var(--lk-primary);
+  font-weight: 600;
+}
+
+.spqr-side-sell {
+  color: var(--lk-error);
+  font-weight: 600;
+}
+
+/* --- Equity curve placeholder --- */
+.spqr-equity-placeholder {
+  width: 100%;
+  height: 10em;
+  border-radius: var(--lk-size-2xs);
+  background: linear-gradient(
+    135deg,
+    var(--lk-surfacecontainerlow) 0%,
+    var(--lk-surfacecontainerhigh) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Section vertical spacing --- */
+.spqr-section-gap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lk-size-sm);
+}

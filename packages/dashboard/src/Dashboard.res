@@ -17,8 +17,16 @@ let botStatusToString = (status: botStatus): string => {
 let botStatusColor = (status: botStatus): string => {
   switch status {
   | Online => "primary"
-  | Offline => "on-surface-variant"
+  | Offline => "onsurfacevariant"
   | BotError(_) => "error"
+  }
+}
+
+let botStatusDotClass = (status: botStatus): string => {
+  switch status {
+  | Online => "spqr-status-dot spqr-status-dot--online"
+  | Offline => "spqr-status-dot spqr-status-dot--offline"
+  | BotError(_) => "spqr-status-dot spqr-status-dot--error"
   }
 }
 
@@ -41,18 +49,23 @@ let make = () => {
     botStatus: Offline,
   })
 
-  <LiftKit.Section py="md">
-    <LiftKit.Heading tag="h2" fontClass="title1-bold">
-      {React.string("Dashboard")}
-    </LiftKit.Heading>
+  <div className="spqr-section-gap">
+    <LiftKit.Row alignItems="center" gap="xs">
+      <LiftKit.Icon name="layout-dashboard" fontClass="title2" color="onsurfacevariant" />
+      <LiftKit.Heading tag="h2" fontClass="title1-bold">
+        {React.string("Dashboard")}
+      </LiftKit.Heading>
+    </LiftKit.Row>
     {switch data {
     | Loading =>
-      <LiftKit.Card>
-        <LiftKit.Text fontClass="body"> {React.string("Loading dashboard...")} </LiftKit.Text>
+      <LiftKit.Card variant="outline">
+        <LiftKit.Text fontClass="body" color="onsurfacevariant">
+          {React.string("Loading dashboard...")}
+        </LiftKit.Text>
       </LiftKit.Card>
     | FailedToLoad({reason}) =>
-      <LiftKit.Card variant="outline">
-        <LiftKit.Text fontClass="body" color="error">
+      <LiftKit.Card variant="outline" bgColor="errorcontainer">
+        <LiftKit.Text fontClass="body" color="onerrorcontainer">
           {React.string(`Failed to load: ${reason}`)}
         </LiftKit.Text>
       </LiftKit.Card>
@@ -60,31 +73,40 @@ let make = () => {
       let Position.Pnl(pnlValue) = totalPnl
       let pnlColor = pnlValue >= 0.0 ? "primary" : "error"
       <LiftKit.Grid columns=3 gap="md" autoResponsive=true>
-        <LiftKit.Card>
-          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-            {React.string("Total P&L")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag="h3" fontClass="display2-bold" fontColor=pnlColor>
-            {React.string(`$${pnlValue->Float.toString}`)}
-          </LiftKit.Heading>
+        <LiftKit.Card variant="fill" bgColor="surfacecontainerlow">
+          <div className="spqr-metric-card">
+            <LiftKit.Text fontClass="caption-bold" color="onsurfacevariant">
+              {React.string("Total P&L")}
+            </LiftKit.Text>
+            <LiftKit.Heading tag="h3" fontClass="title1-bold" fontColor=pnlColor>
+              {React.string(`$${pnlValue->Float.toString}`)}
+            </LiftKit.Heading>
+          </div>
         </LiftKit.Card>
-        <LiftKit.Card>
-          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-            {React.string("Active Positions")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag="h3" fontClass="display2-bold">
-            {React.string(activePositions->Int.toString)}
-          </LiftKit.Heading>
+        <LiftKit.Card variant="fill" bgColor="surfacecontainerlow">
+          <div className="spqr-metric-card">
+            <LiftKit.Text fontClass="caption-bold" color="onsurfacevariant">
+              {React.string("Active Positions")}
+            </LiftKit.Text>
+            <LiftKit.Heading tag="h3" fontClass="title1-bold">
+              {React.string(activePositions->Int.toString)}
+            </LiftKit.Heading>
+          </div>
         </LiftKit.Card>
-        <LiftKit.Card>
-          <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-            {React.string("Bot Status")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag="h3" fontClass="display2-bold" fontColor={botStatus->botStatusColor}>
-            {React.string(botStatus->botStatusToString)}
-          </LiftKit.Heading>
+        <LiftKit.Card variant="fill" bgColor="surfacecontainerlow">
+          <div className="spqr-metric-card">
+            <LiftKit.Text fontClass="caption-bold" color="onsurfacevariant">
+              {React.string("Bot Status")}
+            </LiftKit.Text>
+            <LiftKit.Row alignItems="center" gap="2xs">
+              <span className={botStatus->botStatusDotClass} />
+              <LiftKit.Heading tag="h3" fontClass="title1-bold" fontColor={botStatus->botStatusColor}>
+                {React.string(botStatus->botStatusToString)}
+              </LiftKit.Heading>
+            </LiftKit.Row>
+          </div>
         </LiftKit.Card>
       </LiftKit.Grid>
     }}
-  </LiftKit.Section>
+  </div>
 }
