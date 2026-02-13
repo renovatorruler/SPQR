@@ -1,4 +1,4 @@
-// Backtest summary metrics
+// Backtest summary metrics — key performance indicators
 
 @react.component
 let make = (~metrics: Backtest.metrics) => {
@@ -7,43 +7,29 @@ let make = (~metrics: Backtest.metrics) => {
   let Backtest.ReturnPercent(totalReturn) = metrics.totalReturn
   let Backtest.DrawdownPercent(maxDd) = metrics.maxDrawdown
 
-  <LiftKit.Section py="md">
-    <LiftKit.Heading tag="h2" fontClass="title1-bold">
-      {React.string("Backtest Summary")}
-    </LiftKit.Heading>
-    <LiftKit.Grid columns=4 gap="md" autoResponsive=true>
-      <LiftKit.Card>
-        <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-          {React.string("Total Return")}
-        </LiftKit.Text>
-        <LiftKit.Heading tag="h3" fontClass="display2-bold">
-          {React.string(`${totalReturn->Float.toFixed(~digits=2)}%`)}
-        </LiftKit.Heading>
-      </LiftKit.Card>
-      <LiftKit.Card>
-        <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-          {React.string("Max Drawdown")}
-        </LiftKit.Text>
-        <LiftKit.Heading tag="h3" fontClass="display2-bold" fontColor="error">
-          {React.string(`${maxDd->Float.toFixed(~digits=2)}%`)}
-        </LiftKit.Heading>
-      </LiftKit.Card>
-      <LiftKit.Card>
-        <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-          {React.string("Win Rate")}
-        </LiftKit.Text>
-        <LiftKit.Heading tag="h3" fontClass="display2-bold">
-          {React.string(`${(winRate *. 100.0)->Float.toFixed(~digits=1)}%`)}
-        </LiftKit.Heading>
-      </LiftKit.Card>
-      <LiftKit.Card>
-        <LiftKit.Text fontClass="label-bold" color="on-surface-variant">
-          {React.string("Total Trades")}
-        </LiftKit.Text>
-        <LiftKit.Heading tag="h3" fontClass="display2-bold">
-          {React.string(trades->Int.toString)}
-        </LiftKit.Heading>
-      </LiftKit.Card>
+  let returnColor = totalReturn >= 0.0 ? #primary : #error
+
+  <div className="spqr-section-gap">
+    <SectionHeader title="Backtest Summary" icon="bar-chart-3" />
+    <LiftKit.Grid columns=4 gap=#md autoResponsive=true>
+      <MetricCard
+        label="Total Return"
+        value={`${totalReturn->Float.toFixed(~digits=2)}%`}
+        fontColor=returnColor
+      />
+      <MetricCard
+        label="Max Drawdown"
+        value={`${maxDd->Float.toFixed(~digits=2)}%`}
+        fontColor=#error
+      />
+      <MetricCard
+        label="Win Rate"
+        value={`${(winRate *. 100.0)->Float.toFixed(~digits=1)}%`}
+      />
+      <MetricCard
+        label="Total Trades"
+        value={trades->Int.toString}
+      />
     </LiftKit.Grid>
-  </LiftKit.Section>
+  </div>
 }

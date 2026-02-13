@@ -78,7 +78,7 @@ let run = async () => {
   // 5. Initialize market data (CCXT — supports 100+ exchanges)
   let marketData = switch CcxtMarketData.make(config.marketData) {
   | Ok(md) =>
-    let Config.Ccxt({exchangeId: Config.ExchangeName(exName)}) = config.marketData.source
+    let Config.Ccxt({exchangeId: Config.CcxtExchangeId(exName)}) = config.marketData.source
     Logger.info(`Market data source initialized (CCXT: ${exName})`)
     md
   | Error(e) =>
@@ -139,8 +139,11 @@ let run = async () => {
   // 9. Start the engine
   await BotLoop.start(engine)
 
-  // 10. Cleanup
-  BotState.persist(state)->ignore
+  // 10. Cleanup — persist final state before closing DB
+  switch BotState.persist(state) {
+  | Ok() => ()
+  | Error(e) => Logger.error(`Failed to persist final state: ${BotError.toString(e)}`)
+  }
   Db.close(db)
   Logger.info("Database closed. Goodbye!")
 }

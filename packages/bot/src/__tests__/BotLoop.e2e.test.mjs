@@ -227,6 +227,7 @@ describe("BotLoop E2E", () => {
       // Simulate an open position at entry 97 (cracked below base at 100)
       BotState.setOpenPosition(state, "BTCUSDT", {
         entryPrice: 97.0,
+        qty: 100.0,
         base: {
           priceLevel: 100.0,
           bounceCount: 3,
@@ -238,7 +239,7 @@ describe("BotLoop E2E", () => {
       });
       RiskManager.recordOpen(state.riskManager);
 
-      // Also record position in DB so sell has qty
+      // Also record position in DB for persistence
       Db.insertPosition(db, {
         symbol: "BTCUSDT",
         side: "Long",
@@ -269,6 +270,7 @@ describe("BotLoop E2E", () => {
       // Open position at 95 (cracked below base at 100)
       BotState.setOpenPosition(state, "BTCUSDT", {
         entryPrice: 95.0,
+        qty: 50.0,
         base: {
           priceLevel: 100.0,
           bounceCount: 3,

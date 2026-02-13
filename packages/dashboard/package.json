@@ -10,27 +10,32 @@
     "res:build": "rescript build",
     "res:watch": "rescript build -w",
     "res:clean": "rescript clean",
-    "add": "liftkit add"
+    "add": "liftkit add",
+    "test": "vitest run"
   },
   "dependencies": {
     "@csstools/normalize.css": "^12.1.1",
     "@material/material-color-utilities": "^0.3.0",
     "@spqr/shared": "*",
+    "better-sqlite3": "^11.9.1",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "^0.511.0",
     "next": "15.5.12",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "swr": "^2.4.0"
   },
   "devDependencies": {
     "@chainlift/liftkit": "0.2.0",
     "@rescript/react": "0.13.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "20.17.50",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
     "rescript": "12.1.0",
     "shadcn": "2.7.0",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^3.2.4"
   }
 }

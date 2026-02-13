@@ -2,7 +2,6 @@
 
 @react.component
 let make = () => {
-  let sampleTrades: array<Trade.trade> = []
   let backtestTrades: array<Trade.trade> = [
     {
       Trade.id: Trade.TradeId("bt-1"),
@@ -50,26 +49,36 @@ let make = () => {
       emaSlow: Config.EmaPeriod(200),
       emaSlopeLookback: Config.EmaSlopeLookback(20),
     },
-    setupEvaluation: Config.Committee({members: [], rule: Config.SimpleMajority, minConfidence: Config.Confidence(0.6)}),
+    setupEvaluation: Config.Committee({
+      members: [],
+      rule: Config.SimpleMajority,
+      minConfidence: Config.Confidence(0.6),
+    }),
     lookbackCandles: Config.CandleCount(200),
   }
 
-  <LiftKit.Container maxWidth="lg">
-    <LiftKit.Section py="lg">
-      <LiftKit.Row alignItems="center" justifyContent="space-between">
-        <LiftKit.Heading tag="h1" fontClass="display1-bold">
-          {React.string("SPQR Trading Bot")}
-        </LiftKit.Heading>
-        <LiftKit.Badge icon="activity" color="primary" />
-      </LiftKit.Row>
-    </LiftKit.Section>
-    <Dashboard />
-    <BacktestSummary metrics={backtestResult.metrics} />
-    <BacktestEquityCurve equity={backtestResult.equityCurve} />
-    <StrategyConfigPanel config=qflConfig />
-    <BacktestTrades trades={backtestResult.trades} />
-    <LiftKit.Section py="md">
-      <TradeHistory trades=sampleTrades />
+  <LiftKit.Container maxWidth=#lg>
+    <LiftKit.Section py=#md px=#sm>
+      // Header
+      <div className="spqr-header">
+        <LiftKit.Row alignItems=#center justifyContent=#"space-between" gap=#md wrapChildren=true>
+          <LiftKit.Heading tag=#h1 fontClass=#"display2-bold">
+            {React.string("SPQR Trading Bot")}
+          </LiftKit.Heading>
+          <LiftKit.Badge icon="activity" color=#primary scale=#md />
+        </LiftKit.Row>
+      </div>
+      // Main content
+      <div className="spqr-section-gap mt-lg">
+        <Dashboard />
+        <BacktestSummary metrics={backtestResult.metrics} />
+        <BacktestEquityCurve equity={backtestResult.equityCurve} />
+        <LiftKit.Grid columns=2 gap=#md autoResponsive=true>
+          <StrategyConfigPanel config=qflConfig />
+          <BacktestTrades trades={backtestResult.trades} />
+        </LiftKit.Grid>
+        <LiveTradeHistory />
+      </div>
     </LiftKit.Section>
   </LiftKit.Container>
 }

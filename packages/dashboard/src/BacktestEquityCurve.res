@@ -1,18 +1,20 @@
-// Backtest equity curve placeholder
+// Backtest equity curve placeholder — charting lib TBD
 
 @react.component
 let make = (~equity: array<Backtest.equityPoint>) => {
   let points = equity->Array.length
 
-  <LiftKit.Section py="md">
-    <LiftKit.Heading tag="h2" fontClass="title1-bold">
-      {React.string("Equity Curve")}
-    </LiftKit.Heading>
-    <LiftKit.Card>
-      <LiftKit.Text fontClass="body" color="on-surface-variant">
-        {React.string(`Equity points: ${points->Int.toString}`)}
+  <div className="spqr-section-gap">
+    <SectionHeader title="Equity Curve" icon="trending-up" />
+    <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
+      <LiftKit.Text fontClass=#caption color=#onsurfacevariant>
+        {React.string(`${points->Int.toString} equity points`)}
       </LiftKit.Text>
-      <div className="h-40 w-full rounded-md bg-[var(--lk-surface-variant)]" />
+      <div className="spqr-equity-placeholder mt-sm">
+        <LiftKit.Text fontClass=#body color=#onsurfacevariant>
+          {React.string("Chart placeholder")}
+        </LiftKit.Text>
+      </div>
     </LiftKit.Card>
-  </LiftKit.Section>
+  </div>
 }

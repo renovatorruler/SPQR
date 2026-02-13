@@ -9,7 +9,7 @@ type symbolState = {
 type t = {
   db: Db.t,
   riskManager: RiskManager.t,
-  mutable regime: LlmEvaluator.marketRegime,
+  mutable regime: LlmShared.marketRegime,
   mutable lastRegimeCheck: option<Trade.timestamp>,
   symbolStates: Dict.t<symbolState>,
 }
@@ -18,7 +18,7 @@ let make = (db: Db.t, riskLimits: Config.riskLimits): t => {
   {
     db,
     riskManager: RiskManager.make(riskLimits),
-    regime: LlmEvaluator.Unknown,
+    regime: LlmShared.Unknown,
     lastRegimeCheck: None,
     symbolStates: Dict.make(),
   }
@@ -38,8 +38,13 @@ let getSymbolState = (state: t, symbol: Trade.symbol): symbolState => {
 let updateBases = (state: t, symbol: Trade.symbol, bases: array<BaseDetector.base>): unit => {
   let ss = getSymbolState(state, symbol)
   ss.bases = bases
-  // Persist to SQLite
-  Db.saveBases(state.db, symbol, bases)->ignore
+  // Persist to SQLite — log on failure, don't crash
+  switch Db.saveBases(state.db, symbol, bases) {
+  | Ok() => ()
+  | Error(e) =>
+    let Trade.Symbol(sym) = symbol
+    Logger.error(`Failed to persist bases for ${sym}: ${BotError.toString(e)}`)
+  }
 }
 
 let setOpenPosition = (
@@ -51,11 +56,14 @@ let setOpenPosition = (
   ss.openPosition = posInfo
 }
 
-let updateRegime = (state: t, regime: LlmEvaluator.marketRegime): unit => {
+let updateRegime = (state: t, regime: LlmShared.marketRegime): unit => {
   state.regime = regime
   state.lastRegimeCheck = Some(Trade.Timestamp(Date.now()))
-  // Persist regime to SQLite
-  Db.saveState(state.db, "regime", LlmEvaluator.regimeToString(regime))->ignore
+  // Persist regime to SQLite — log on failure, don't crash
+  switch Db.saveState(state.db, "regime", LlmShared.regimeToString(regime)) {
+  | Ok() => ()
+  | Error(e) => Logger.error(`Failed to persist regime: ${BotError.toString(e)}`)
+  }
 }
 
 let isRegimeStale = (state: t, intervalMs: Config.intervalMs): bool => {
@@ -84,6 +92,7 @@ let restore = (db: Db.t, riskLimits: Config.riskLimits): result<t, BotError.t> =
       }
       let posInfo: QflStrategy.openPositionInfo = {
         entryPrice: pos.entryPrice,
+        qty: pos.currentQty,
         base: {
           priceLevel: pos.entryPrice,
           bounceCount: Config.BounceCount(1),
@@ -103,5 +112,5 @@ let restore = (db: Db.t, riskLimits: Config.riskLimits): result<t, BotError.t> =
 
 // Persist current state to SQLite
 let persist = (state: t): result<unit, BotError.t> => {
-  Db.saveState(state.db, "regime", LlmEvaluator.regimeToString(state.regime))
+  Db.saveState(state.db, "regime", LlmShared.regimeToString(state.regime))
 }

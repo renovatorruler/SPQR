@@ -116,6 +116,7 @@ let checkTakeProfit = (
 // Open position info needed for exit signal checks
 type openPositionInfo = {
   entryPrice: Trade.price,
+  qty: Trade.quantity,
   base: BaseDetector.base,
 }
 
