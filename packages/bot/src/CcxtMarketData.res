@@ -5,6 +5,17 @@
 type t = {
   config: Config.marketDataConfig,
   exchange: CcxtBindings.exchange,
+  mutable marketsLoaded: bool,
+}
+
+// Load markets once — CCXT caches the catalog internally after the first call.
+// Previous code called loadMarkets on every getCandles/getCurrentPrice, wasting
+// a full HTTP roundtrip per call.
+let ensureMarketsLoaded = async (t: t): unit => {
+  if !t.marketsLoaded {
+    await CcxtBindings.loadMarkets(t.exchange)
+    t.marketsLoaded = true
+  }
 }
 
 // Symbol format conversion: "BTCUSDT" → "BTC/USDT" for CCXT unified API
@@ -25,7 +36,7 @@ let make = (config: Config.marketDataConfig): result<t, BotError.t> => {
   let Config.Ccxt({exchangeId: Config.CcxtExchangeId(id)}) = config.source
   try {
     let exchange = CcxtBindings.createExchange(id)
-    Ok({config, exchange})
+    Ok({config, exchange, marketsLoaded: false})
   } catch {
   | JsExn(jsExn) =>
     let msg = jsExn->JsExn.message->Option.getOr("Unknown error")
@@ -72,7 +83,7 @@ let getCandles = async (
   let unifiedSymbol = toUnifiedSymbol(symbol)
 
   try {
-    await CcxtBindings.loadMarkets(t.exchange)
+    await ensureMarketsLoaded(t)
     let ohlcvRows = await CcxtBindings.fetchOHLCV(t.exchange, unifiedSymbol, ivl, None, lim)
     let candles = ohlcvRows->Array.filterMap(parseOhlcvRow)
     if candles->Array.length == 0 && ohlcvRows->Array.length > 0 {
@@ -97,7 +108,7 @@ let getCurrentPrice = async (
   let unifiedSymbol = toUnifiedSymbol(symbol)
 
   try {
-    await CcxtBindings.loadMarkets(t.exchange)
+    await ensureMarketsLoaded(t)
     let ticker = await CcxtBindings.fetchTicker(t.exchange, unifiedSymbol)
     switch ticker.last->Nullable.toOption {
     | Some(price) => Ok(Trade.Price(price))

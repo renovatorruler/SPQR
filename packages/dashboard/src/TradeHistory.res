@@ -58,12 +58,7 @@ let make = (~trades: array<Trade.trade>, ~showHeading: bool=true) => {
 
   <div className="spqr-section-gap">
     {if showHeading {
-      <LiftKit.Row alignItems=#center gap=#xs>
-        <LiftKit.Icon name="list" fontClass=#title2 color=#onsurfacevariant />
-        <LiftKit.Heading tag=#h2 fontClass=#"title1-bold">
-          {React.string("Trade History")}
-        </LiftKit.Heading>
-      </LiftKit.Row>
+      <SectionHeader title="Trade History" icon="list" />
     } else {
       React.null
     }}

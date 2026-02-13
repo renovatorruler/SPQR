@@ -118,6 +118,7 @@ describe("BotState", () => {
       let state = BotState.make(getDb(), riskLimits)
       let posInfo: QflStrategy.openPositionInfo = {
         entryPrice: Trade.Price(50000.0),
+        qty: Trade.Quantity(1.0),
         base: {
           priceLevel: Trade.Price(48000.0),
           bounceCount: Config.BounceCount(3),
@@ -144,6 +145,7 @@ describe("BotState", () => {
         Trade.Symbol("BTCUSDT"),
         Some({
           entryPrice: Trade.Price(50000.0),
+          qty: Trade.Quantity(1.0),
           base: {
             priceLevel: Trade.Price(48000.0),
             bounceCount: Config.BounceCount(3),

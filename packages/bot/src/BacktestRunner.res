@@ -147,6 +147,7 @@ let runSingleSymbol = (
         st.openPosition->Option.map(op => {
           let record: QflStrategy.openPositionInfo = {
             QflStrategy.entryPrice: op.position.entryPrice,
+            qty: op.position.currentQty,
             base: op.base,
           }
           record

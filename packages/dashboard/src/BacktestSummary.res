@@ -10,53 +10,26 @@ let make = (~metrics: Backtest.metrics) => {
   let returnColor = totalReturn >= 0.0 ? #primary : #error
 
   <div className="spqr-section-gap">
-    <LiftKit.Row alignItems=#center gap=#xs>
-      <LiftKit.Icon name="bar-chart-3" fontClass=#title2 color=#onsurfacevariant />
-      <LiftKit.Heading tag=#h2 fontClass=#"title1-bold">
-        {React.string("Backtest Summary")}
-      </LiftKit.Heading>
-    </LiftKit.Row>
+    <SectionHeader title="Backtest Summary" icon="bar-chart-3" />
     <LiftKit.Grid columns=4 gap=#md autoResponsive=true>
-      <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-        <div className="spqr-metric-card">
-          <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-            {React.string("Total Return")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag=#h3 fontClass=#"title1-bold" fontColor=returnColor>
-            {React.string(`${totalReturn->Float.toFixed(~digits=2)}%`)}
-          </LiftKit.Heading>
-        </div>
-      </LiftKit.Card>
-      <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-        <div className="spqr-metric-card">
-          <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-            {React.string("Max Drawdown")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag=#h3 fontClass=#"title1-bold" fontColor=#error>
-            {React.string(`${maxDd->Float.toFixed(~digits=2)}%`)}
-          </LiftKit.Heading>
-        </div>
-      </LiftKit.Card>
-      <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-        <div className="spqr-metric-card">
-          <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-            {React.string("Win Rate")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag=#h3 fontClass=#"title1-bold">
-            {React.string(`${(winRate *. 100.0)->Float.toFixed(~digits=1)}%`)}
-          </LiftKit.Heading>
-        </div>
-      </LiftKit.Card>
-      <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-        <div className="spqr-metric-card">
-          <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-            {React.string("Total Trades")}
-          </LiftKit.Text>
-          <LiftKit.Heading tag=#h3 fontClass=#"title1-bold">
-            {React.string(trades->Int.toString)}
-          </LiftKit.Heading>
-        </div>
-      </LiftKit.Card>
+      <MetricCard
+        label="Total Return"
+        value={`${totalReturn->Float.toFixed(~digits=2)}%`}
+        fontColor=returnColor
+      />
+      <MetricCard
+        label="Max Drawdown"
+        value={`${maxDd->Float.toFixed(~digits=2)}%`}
+        fontColor=#error
+      />
+      <MetricCard
+        label="Win Rate"
+        value={`${(winRate *. 100.0)->Float.toFixed(~digits=1)}%`}
+      />
+      <MetricCard
+        label="Total Trades"
+        value={trades->Int.toString}
+      />
     </LiftKit.Grid>
   </div>
 }

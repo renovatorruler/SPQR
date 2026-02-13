@@ -241,6 +241,7 @@ describe("QflStrategy", () => {
 
       let openPosition: QflStrategy.openPositionInfo = {
         entryPrice: Trade.Price(97.0),
+        qty: Trade.Quantity(100.0),
         base: makeBase(~priceLevel=100.0, ()),
       }
 

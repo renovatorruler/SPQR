@@ -41,21 +41,31 @@ type dashboardData =
     })
   | FailedToLoad({reason: string})
 
+// Map API regime string to bot status
+// The regime field indicates the bot has been writing to the DB (i.e. it ran)
+let regimeToStatus = (regime: string): botStatus => {
+  switch regime {
+  | "unknown" => Offline
+  | _ => Online
+  }
+}
+
 @react.component
 let make = () => {
-  let data = Loaded({
-    totalPnl: Position.Pnl(0.0),
-    activePositions: 0,
-    botStatus: Offline,
-  })
+  let apiState = ApiHooks.useDashboard()
+  let data = switch apiState {
+  | ApiHooks.Loading => Loading
+  | ApiHooks.Failed({message}) => FailedToLoad({reason: message})
+  | ApiHooks.Loaded(resp) =>
+    Loaded({
+      totalPnl: Position.Pnl(resp.totalPnl),
+      activePositions: resp.activePositions,
+      botStatus: regimeToStatus(resp.regime),
+    })
+  }
 
   <div className="spqr-section-gap">
-    <LiftKit.Row alignItems=#center gap=#xs>
-      <LiftKit.Icon name="layout-dashboard" fontClass=#title2 color=#onsurfacevariant />
-      <LiftKit.Heading tag=#h2 fontClass=#"title1-bold">
-        {React.string("Dashboard")}
-      </LiftKit.Heading>
-    </LiftKit.Row>
+    <SectionHeader title="Dashboard" icon="layout-dashboard" />
     {switch data {
     | Loading =>
       <LiftKit.Card variant=#outline>
@@ -73,39 +83,23 @@ let make = () => {
       let Position.Pnl(pnlValue) = totalPnl
       let pnlColor = pnlValue >= 0.0 ? #primary : #error
       <LiftKit.Grid columns=3 gap=#md autoResponsive=true>
-        <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-          <div className="spqr-metric-card">
-            <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-              {React.string("Total P&L")}
-            </LiftKit.Text>
-            <LiftKit.Heading tag=#h3 fontClass=#"title1-bold" fontColor=pnlColor>
-              {React.string(`$${pnlValue->Float.toString}`)}
+        <MetricCard
+          label="Total P&L"
+          value={`$${pnlValue->Float.toString}`}
+          fontColor=pnlColor
+        />
+        <MetricCard
+          label="Active Positions"
+          value={activePositions->Int.toString}
+        />
+        <MetricCard label="Bot Status">
+          <LiftKit.Row alignItems=#center gap=#"2xs">
+            <span className={botStatus->botStatusDotClass} />
+            <LiftKit.Heading tag=#h3 fontClass=#"title1-bold" fontColor={botStatus->botStatusColor}>
+              {React.string(botStatus->botStatusToString)}
             </LiftKit.Heading>
-          </div>
-        </LiftKit.Card>
-        <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-          <div className="spqr-metric-card">
-            <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-              {React.string("Active Positions")}
-            </LiftKit.Text>
-            <LiftKit.Heading tag=#h3 fontClass=#"title1-bold">
-              {React.string(activePositions->Int.toString)}
-            </LiftKit.Heading>
-          </div>
-        </LiftKit.Card>
-        <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
-          <div className="spqr-metric-card">
-            <LiftKit.Text fontClass=#"caption-bold" color=#onsurfacevariant>
-              {React.string("Bot Status")}
-            </LiftKit.Text>
-            <LiftKit.Row alignItems=#center gap=#"2xs">
-              <span className={botStatus->botStatusDotClass} />
-              <LiftKit.Heading tag=#h3 fontClass=#"title1-bold" fontColor={botStatus->botStatusColor}>
-                {React.string(botStatus->botStatusToString)}
-              </LiftKit.Heading>
-            </LiftKit.Row>
-          </div>
-        </LiftKit.Card>
+          </LiftKit.Row>
+        </MetricCard>
       </LiftKit.Grid>
     }}
   </div>

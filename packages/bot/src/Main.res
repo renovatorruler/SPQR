@@ -139,8 +139,11 @@ let run = async () => {
   // 9. Start the engine
   await BotLoop.start(engine)
 
-  // 10. Cleanup
-  BotState.persist(state)->ignore
+  // 10. Cleanup — persist final state before closing DB
+  switch BotState.persist(state) {
+  | Ok() => ()
+  | Error(e) => Logger.error(`Failed to persist final state: ${BotError.toString(e)}`)
+  }
   Db.close(db)
   Logger.info("Database closed. Goodbye!")
 }

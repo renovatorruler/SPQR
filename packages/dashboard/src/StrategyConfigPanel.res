@@ -48,12 +48,7 @@ let make = (~config: Config.qflConfig) => {
 
   <LiftKit.Card variant=#fill bgColor=#surfacecontainerlow>
     <div className="spqr-section-gap">
-      <LiftKit.Row alignItems=#center gap=#xs>
-        <LiftKit.Icon name="settings" fontClass=#title2 color=#onsurfacevariant />
-        <LiftKit.Heading tag=#h3 fontClass=#"heading-bold">
-          {React.string("Strategy Parameters")}
-        </LiftKit.Heading>
-      </LiftKit.Row>
+      <SectionHeader title="Strategy Parameters" icon="settings" level=Section />
       <div className="spqr-config-grid">
         <ConfigRow
           label="Crack Threshold"

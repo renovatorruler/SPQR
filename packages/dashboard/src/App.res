@@ -2,7 +2,6 @@
 
 @react.component
 let make = () => {
-  let sampleTrades: array<Trade.trade> = []
   let backtestTrades: array<Trade.trade> = [
     {
       Trade.id: Trade.TradeId("bt-1"),
@@ -78,7 +77,7 @@ let make = () => {
           <StrategyConfigPanel config=qflConfig />
           <BacktestTrades trades={backtestResult.trades} />
         </LiftKit.Grid>
-        <TradeHistory trades=sampleTrades />
+        <LiveTradeHistory />
       </div>
     </LiftKit.Section>
   </LiftKit.Container>

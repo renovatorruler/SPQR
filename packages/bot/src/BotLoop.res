@@ -119,11 +119,16 @@ let processSymbol = async (
         switch engine.config.llm {
         | Some(llmConfig) =>
           if BotState.isRegimeStale(engine.state, llmConfig.regimeCheckIntervalMs) {
-            let regimeResult = await LlmEvaluator.assessRegime(~candles, ~config=llmConfig)
+            let config = LlmShared.configFromLlmConfig(llmConfig)
+            let regimeResult = await LlmService.assessRegime(
+              ~provider=Config.Anthropic,
+              ~candles,
+              ~config,
+            )
             switch regimeResult {
             | Ok(regime) =>
               BotState.updateRegime(engine.state, regime)
-              Logger.info(`Market regime: ${LlmEvaluator.regimeToString(regime)}`)
+              Logger.info(`Market regime: ${LlmShared.regimeToString(regime)}`)
             | Error(e) =>
               Logger.error(`LLM regime check failed: ${BotError.toString(e)}`)
             }
@@ -162,41 +167,18 @@ let processSymbol = async (
         if proceedToEntry {
           let Trade.Quantity(maxQty) = engine.config.riskLimits.maxPositionSize
           let qty = Trade.Quantity(maxQty /. priceVal)
-          switch RiskManager.checkEntry(engine.state.riskManager, ~qty, ~price=currentPrice) {
-          | RiskManager.Blocked(err) =>
-            Logger.error(`${sym}: RISK BLOCKED — ${BotError.toString(err)}`)
-            Ok()
-          | RiskManager.Allowed =>
-            let orderResult = await PaperExchange.placeOrder(
-              engine.exchange,
-              ~symbol,
-              ~side=Trade.Buy,
-              ~orderType=Trade.Market,
-              ~qty,
-            )
-            switch orderResult {
-            | Ok(trade) =>
-              Db.insertTrade(engine.state.db, trade)->ignore
-              let pos = Position.make(
-                ~symbol,
-                ~side=Position.Long,
-                ~entryPrice=currentPrice,
-                ~qty,
-                ~openedAt=Trade.Timestamp(Date.now()),
-              )
-              Db.insertPosition(engine.state.db, pos)->ignore
-              RiskManager.recordOpen(engine.state.riskManager)
-              BotState.setOpenPosition(
-                engine.state,
-                symbol,
-                Some({entryPrice: currentPrice, base}),
-              )
-              Logger.trade(`${sym}: BUY executed`)
-              Ok()
-            | Error(e) =>
-              Logger.error(`${sym}: Order failed — ${BotError.toString(e)}`)
-              Error(e)
-            }
+          let buyResult = await TradeExecutor.executeBuy(
+            ~exchange=engine.exchange,
+            ~db=engine.state.db,
+            ~state=engine.state,
+            ~symbol,
+            ~currentPrice,
+            ~qty,
+            ~base,
+          )
+          switch buyResult {
+          | Ok(_) => Ok()
+          | Error(e) => Error(e)
           }
         } else {
           Ok()
@@ -209,47 +191,20 @@ let processSymbol = async (
         let symbolState = BotState.getSymbolState(engine.state, symbol)
         switch symbolState.openPosition {
         | None => Ok()
-        | Some(_) =>
-          // Find position quantity from database
-          let qtyOpt = switch Db.getOpenPositions(engine.state.db) {
-          | Ok(positions) =>
-            positions
-            ->Array.find(p => p.symbol == symbol)
-            ->Option.map(p => p.currentQty)
-          | Error(_) => None
-          }
-
-          switch qtyOpt {
-          | None =>
-            Logger.error(`${sym}: No position quantity found — clearing state`)
-            BotState.setOpenPosition(engine.state, symbol, None)
-            Ok()
-          | Some(qty) =>
-            let orderResult = await PaperExchange.placeOrder(
-              engine.exchange,
-              ~symbol,
-              ~side=Trade.Sell,
-              ~orderType=Trade.Market,
-              ~qty,
-            )
-            switch orderResult {
-            | Ok(trade) =>
-              Db.insertTrade(engine.state.db, trade)->ignore
-              let pnl = Position.computePnl(
-                ~side=Position.Long,
-                ~entryPrice,
-                ~currentPrice,
-                ~qty,
-              )
-              RiskManager.recordClose(engine.state.riskManager, pnl)
-              BotState.setOpenPosition(engine.state, symbol, None)
-              let Position.Pnl(pnlVal) = pnl
-              Logger.trade(`${sym}: SELL (take profit) PnL: ${pnlVal->Float.toFixed(~digits=2)}`)
-              Ok()
-            | Error(e) =>
-              Logger.error(`${sym}: Sell failed — ${BotError.toString(e)}`)
-              Error(e)
-            }
+        | Some({qty, _}) =>
+          let sellResult = await TradeExecutor.executeSell(
+            ~exchange=engine.exchange,
+            ~db=engine.state.db,
+            ~state=engine.state,
+            ~symbol,
+            ~entryPrice,
+            ~currentPrice,
+            ~qty,
+            ~reason="take profit",
+          )
+          switch sellResult {
+          | Ok(_) => Ok()
+          | Error(e) => Error(e)
           }
         }
 
@@ -262,48 +217,20 @@ let processSymbol = async (
         let symbolState = BotState.getSymbolState(engine.state, symbol)
         switch symbolState.openPosition {
         | None => Ok()
-        | Some(_) =>
-          let qtyOpt = switch Db.getOpenPositions(engine.state.db) {
-          | Ok(positions) =>
-            positions
-            ->Array.find(p => p.symbol == symbol)
-            ->Option.map(p => p.currentQty)
-          | Error(_) => None
-          }
-
-          switch qtyOpt {
-          | None =>
-            Logger.error(`${sym}: No position quantity found — clearing state`)
-            BotState.setOpenPosition(engine.state, symbol, None)
-            Ok()
-          | Some(qty) =>
-            let orderResult = await PaperExchange.placeOrder(
-              engine.exchange,
-              ~symbol,
-              ~side=Trade.Sell,
-              ~orderType=Trade.Market,
-              ~qty,
-            )
-            switch orderResult {
-            | Ok(trade) =>
-              Db.insertTrade(engine.state.db, trade)->ignore
-              let pnl = Position.computePnl(
-                ~side=Position.Long,
-                ~entryPrice,
-                ~currentPrice,
-                ~qty,
-              )
-              RiskManager.recordClose(engine.state.riskManager, pnl)
-              BotState.setOpenPosition(engine.state, symbol, None)
-              let Position.Pnl(pnlVal) = pnl
-              Logger.trade(
-                `${sym}: SELL (stop loss) PnL: ${pnlVal->Float.toFixed(~digits=2)} — waiting for new channel`,
-              )
-              Ok()
-            | Error(e) =>
-              Logger.error(`${sym}: Stop loss sell failed — ${BotError.toString(e)}`)
-              Error(e)
-            }
+        | Some({qty, _}) =>
+          let sellResult = await TradeExecutor.executeSell(
+            ~exchange=engine.exchange,
+            ~db=engine.state.db,
+            ~state=engine.state,
+            ~symbol,
+            ~entryPrice,
+            ~currentPrice,
+            ~qty,
+            ~reason="stop loss",
+          )
+          switch sellResult {
+          | Ok(_) => Ok()
+          | Error(e) => Error(e)
           }
         }
       }
@@ -333,8 +260,11 @@ let tick = async (engine: t): result<unit, BotError.t> => {
     engine.engineState = ShuttingDown
   }
 
-  // Persist state
-  BotState.persist(engine.state)->ignore
+  // Persist state — log on failure, don't halt the loop
+  switch BotState.persist(engine.state) {
+  | Ok() => ()
+  | Error(e) => Logger.error(`Failed to persist state: ${BotError.toString(e)}`)
+  }
 
   Ok()
 }
@@ -372,15 +302,14 @@ let printSummary = (engine: t): unit => {
     | Ok(balance) =>
       let Config.Balance(bal) = balance
       Logger.info(`Final balance: $${bal->Float.toFixed(~digits=2)}`)
-    | Error(_) => ()
+    | Error(e) => Logger.error(`Failed to get final balance: ${BotError.toString(e)}`)
     }
   })
 
-  let posResult = Db.getOpenPositions(engine.state.db)
-  switch posResult {
+  switch Db.getOpenPositions(engine.state.db) {
   | Ok(positions) =>
     Logger.info(`Open positions: ${positions->Array.length->Int.toString}`)
-  | Error(_) => ()
+  | Error(e) => Logger.error(`Failed to query open positions: ${BotError.toString(e)}`)
   }
 }
 

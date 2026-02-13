@@ -1,4 +1,7 @@
 // LLM Committee — evaluates setups via multiple LLMs and votes
+//
+// Uses LlmService for provider dispatch — no hard-coded provider switching here.
+// Each member's provider variant determines which API backend handles the call.
 
 type voteDecision =
   | Yes
@@ -14,11 +17,11 @@ type committeeDecision =
   | Go({confidence: Config.confidence, votes: array<vote>})
   | NoGo({confidence: Config.confidence, votes: array<vote>})
 
-let voteFromEvaluation = (evaluation: LlmEvaluator.setupEvaluation): vote => {
+let voteFromEvaluation = (evaluation: LlmShared.setupEvaluation): vote => {
   switch evaluation {
-  | LlmEvaluator.Go(_) =>
+  | LlmShared.Go(_) =>
     {decision: Yes, confidence: Config.Confidence(0.6), weight: Config.Weight(1.0)}
-  | LlmEvaluator.Skip(_) =>
+  | LlmShared.Skip(_) =>
     {decision: No, confidence: Config.Confidence(0.6), weight: Config.Weight(1.0)}
   }
 }
@@ -29,42 +32,21 @@ let evaluateMember = async (
   ~base: BaseDetector.base,
   ~currentPrice: Trade.price,
   ~crackPercent: Config.crackPercent,
-  ~regime: LlmEvaluator.marketRegime,
+  ~regime: LlmShared.marketRegime,
   ~candles: array<Config.candlestick>,
 ): result<vote, BotError.t> => {
-  switch member.provider {
-  | Config.OpenRouter =>
-    let result = await OpenRouterEvaluator.evaluateSetup(
-      ~member,
-      ~symbol,
-      ~base,
-      ~currentPrice,
-      ~crackPercent,
-      ~regime,
-      ~candles,
-    )
-    result->Result.map(voteFromEvaluation)
-  | Config.Anthropic =>
-    let Config.LlmModelId(modelId) = member.modelId
-    let config: Config.llmConfig = {
-      apiKey: member.apiKey,
-      model: Config.LlmModel(modelId),
-      regimeCheckIntervalMs: Config.IntervalMs(60000),
-      evaluateSetups: true,
-    }
-    let result = await LlmEvaluator.evaluateSetup(
-      ~symbol,
-      ~base,
-      ~currentPrice,
-      ~crackPercent,
-      ~regime,
-      ~candles,
-      ~config,
-    )
-    result->Result.map(voteFromEvaluation)
-  | _ =>
-    Error(BotError.LlmError(ApiCallFailed({message: "LLM provider not implemented"})))
-  }
+  let config = LlmShared.configFromMember(member)
+  let result = await LlmService.evaluateSetup(
+    ~provider=member.provider,
+    ~symbol,
+    ~base,
+    ~currentPrice,
+    ~crackPercent,
+    ~regime,
+    ~candles,
+    ~config,
+  )
+  result->Result.map(voteFromEvaluation)
 }
 
 let tallyVotes = (votes: array<vote>): (int, int, float, float) => {
@@ -98,31 +80,43 @@ let evaluateSetup = async (
   ~base: BaseDetector.base,
   ~currentPrice: Trade.price,
   ~crackPercent: Config.crackPercent,
-  ~regime: LlmEvaluator.marketRegime,
+  ~regime: LlmShared.marketRegime,
   ~candles: array<Config.candlestick>,
 ): result<committeeDecision, BotError.t> => {
-  let votes: array<vote> = []
+  // Parallel evaluation — each member's LLM call runs concurrently.
+  // Latency = max(call1, call2, ...) instead of sum(call1, call2, ...).
+  // LLM providers (OpenRouter, Anthropic) support concurrent requests.
+  let promises = committee.members->Array.map(member => {
+    evaluateMember(
+      ~member,
+      ~symbol,
+      ~base,
+      ~currentPrice,
+      ~crackPercent,
+      ~regime,
+      ~candles,
+    )
+  })
+  let results = await Promise.all(promises)
 
-  // Sequential async for rate-limited API calls.
-  for i in 0 to committee.members->Array.length - 1 {
-    switch committee.members[i] {
-    | Some(member) =>
-      let result = await evaluateMember(
-        ~member,
-        ~symbol,
-        ~base,
-        ~currentPrice,
-        ~crackPercent,
-        ~regime,
-        ~candles,
-      )
-      switch result {
-      | Ok(vote) => votes->Array.push({...vote, weight: member.weight})
-      | Error(_) => ()
+  let votes: array<vote> = []
+  results->Array.forEachWithIndex((result, i) => {
+    switch result {
+    | Ok(vote) =>
+      switch committee.members[i] {
+      | Some(member) => votes->Array.push({...vote, weight: member.weight})
+      | None => ()
       }
-    | None => ()
+    | Error(e) =>
+      let modelId = switch committee.members[i] {
+      | Some(member) =>
+        let Config.LlmModelId(id) = member.modelId
+        id
+      | None => "unknown"
+      }
+      Logger.error(`Committee member ${modelId} failed: ${BotError.toString(e)}`)
     }
-  }
+  })
 
   let (yesCount, noCount, yesWeight, yesConfidence) = tallyVotes(votes)
   let totalYes = if yesCount > 0 { yesCount } else { 1 }
